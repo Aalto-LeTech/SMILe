@@ -1,223 +1,112 @@
-/* .            .           .                   .                 +             .          +      */
-/*         +-----------+  +---+    +  +---+  +-----------+  +---+    Media Programming in Scala   */
-/*   *     |           |  |    \     /    |  |           | +|   |            Since 2015           */
-/*         |   +-------+  |     \   /     |  |   +-------+  |   |   .                        .    */
-/*         |   |          |      \ /      |  |   |          |   |         Aalto University        */
-/*       . |   +-------+  |   .   V   .   |  |   |   .      |   |      .   Espoo, Finland       . */
-/*  +      |           |  |   |\     /|   |  |   |          |   |                  .    +         */
-/*         +------+    |  |   | \   / |   |  |   |          |   |    +        *                   */
-/*    *           |    |  |   |  \ /  |   |  |   |      *   |   |                     .      +    */
-/*      -- +------+    |  |   |   V  *|   |  |   +-------+  |   +-------+ --    .                 */
-/*    ---  |           |  |   | .     |   |  |           |  |           |  ---      +      *      */
-/*  ------ +-----------+  +---+       +---+  +-----------+  +-----------+ ------               .  */
-/*                                                                                     .          */
-/*     T H E   S C A L A   M E D I A   C O M P U T A T I O N   L I B R A R Y      .         +     */
-/*                                                                                    *           */
+package smile.pictures
 
-package smcl.pictures
+import smile.Settings.{
+  DefaultPrimaryColor,
+  DefaultSecondaryColor,
+  ShapesHaveBordersByDefault,
+  ShapesHaveFillingsByDefault
+}
+import smile.colors.Color
+import smile.modeling.Pos
 
-
-import smcl.colors
-import smcl.colors.rgb
-import smcl.modeling.d2.Pos
-import smcl.settings._
-
-
-
-
-/** An object-based API for creating rectangles.
-  *
-  * @author Aleksi Lukkarinen
-  */
-object Rectangle {
-
-  /**
-    *
-    * @param sideLengthInPixels
-    *
-    * @return
-    */
+object Rectangle:
   def apply(sideLengthInPixels: Double): VectorGraphic =
     apply(
       sideLengthInPixels,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor)
+      fillColor = DefaultSecondaryColor
+    )
 
-  /**
-    *
-    * @param sideLengthInPixels
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
   def apply(
       sideLengthInPixels: Double,
       hasBorder: Boolean,
       hasFilling: Boolean,
-      color: colors.rgb.Color,
-      fillColor: rgb.Color): VectorGraphic = {
+      color: Color,
+      fillColor: Color
+  ): VectorGraphic =
+    apply(sideLengthInPixels, Pos.Origo, hasBorder, hasFilling, color, fillColor)
 
-    apply(
-      sideLengthInPixels,
-      Pos.Origo,
-      hasBorder, hasFilling,
-      color, fillColor)
-  }
-
-  /**
-    *
-    * @param sideLengthInPixels
-    * @param center
-    *
-    * @return
-    */
-  def apply(
-      sideLengthInPixels: Double,
-      center: Pos): VectorGraphic = {
-
+  def apply(sideLengthInPixels: Double, center: Pos): VectorGraphic =
     apply(
       sideLengthInPixels,
       center,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor)
-  }
+      fillColor = DefaultSecondaryColor
+    )
 
-  /**
-    *
-    * @param sideLengthInPixels
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
   def apply(
       sideLengthInPixels: Double,
       center: Pos,
       hasBorder: Boolean,
       hasFilling: Boolean,
-      color: rgb.Color,
-      fillColor: rgb.Color): VectorGraphic = {
+      color: Color,
+      fillColor: Color
+  ): VectorGraphic =
+    require(
+      sideLengthInPixels >= 0.0,
+      s"Rectangle's side length cannot be negative (was: $sideLengthInPixels)."
+    )
+    apply(sideLengthInPixels, sideLengthInPixels, center, hasBorder, hasFilling, color, fillColor)
 
-    if (sideLengthInPixels < 0.0) {
-      throw new IllegalArgumentException(
-        s"Rectangle's side length cannot be negative (was: $sideLengthInPixels).")
-    }
-
+  def apply(baseLengthInPixels: Double, heightInPixels: Double): VectorGraphic =
     apply(
-      sideLengthInPixels, sideLengthInPixels,
-      center,
-      hasBorder, hasFilling,
-      color, fillColor)
-  }
-
-  /**
-    *
-    * @param baseLengthInPixels
-    * @param heightInPixels
-    *
-    * @return
-    */
-  def apply(
-      baseLengthInPixels: Double,
-      heightInPixels: Double): VectorGraphic = {
-
-    apply(
-      baseLengthInPixels, heightInPixels,
+      baseLengthInPixels,
+      heightInPixels,
       Pos.Origo,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor)
-  }
+      fillColor = DefaultSecondaryColor
+    )
 
-  /**
-    *
-    * @param baseLengthInPixels
-    * @param heightInPixels
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
   def apply(
       baseLengthInPixels: Double,
       heightInPixels: Double,
       hasBorder: Boolean,
       hasFilling: Boolean,
-      color: rgb.Color,
-      fillColor: rgb.Color): VectorGraphic = {
+      color: Color,
+      fillColor: Color
+  ): VectorGraphic =
+    apply(baseLengthInPixels, heightInPixels, Pos.Origo, hasBorder, hasFilling, color, fillColor)
 
-    apply(
-      baseLengthInPixels, heightInPixels,
-      Pos.Origo,
-      hasBorder, hasFilling,
-      color, fillColor)
-  }
-
-  /**
-    *
-    * @param baseLengthInPixels
-    * @param heightInPixels
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
   def apply(
       baseLengthInPixels: Double,
       heightInPixels: Double,
       center: Pos,
       hasBorder: Boolean = ShapesHaveBordersByDefault,
       hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: rgb.Color = DefaultPrimaryColor,
-      fillColor: rgb.Color = DefaultSecondaryColor): VectorGraphic = {
-
-    if (baseLengthInPixels < 0.0) {
-      throw new IllegalArgumentException(
-        s"Rectangle's base length cannot be negative (was: $baseLengthInPixels).")
-    }
-
-    if (heightInPixels < 0.0) {
-      throw new IllegalArgumentException(
-        s"Rectangle's height cannot be negative (was: $heightInPixels).")
-    }
+      color: Color = DefaultPrimaryColor,
+      fillColor: Color = DefaultSecondaryColor
+  ): VectorGraphic =
+    require(
+      baseLengthInPixels >= 0.0,
+      s"Rectangle's base length cannot be negative (was: $baseLengthInPixels)."
+    )
+    require(heightInPixels >= 0.0, s"Rectangle's height cannot be negative (was: $heightInPixels).")
 
     val cornerPoints =
-      if (baseLengthInPixels > 0.0 && heightInPixels > 0.0) {
-        val halfWidth = (baseLengthInPixels - 1) / 2.0
+      if baseLengthInPixels > 0.0 && heightInPixels > 0.0 then
+        val halfWidth  = (baseLengthInPixels - 1) / 2.0
         val halfHeight = (heightInPixels - 1) / 2.0
 
         Seq(
           Pos(-halfWidth, -halfHeight),
           Pos(halfWidth, -halfHeight),
           Pos(halfWidth, halfHeight),
-          Pos(-halfWidth, halfHeight))
-      }
-      else {
-        Seq()
-      }
+          Pos(-halfWidth, halfHeight)
+        )
+      else Seq()
 
     Polygon(
       center,
       cornerPoints,
       referencePointRelativeToCenterAtOrigo = Pos.Origo,
-      hasBorder, hasFilling,
-      color, fillColor)
-  }
-
-}
+      hasBorder,
+      hasFilling,
+      color,
+      fillColor
+    )

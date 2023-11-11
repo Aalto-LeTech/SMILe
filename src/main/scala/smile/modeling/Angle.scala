@@ -1,35 +1,11 @@
-/* .            .           .                   .                 +             .          +      */
-/*         +-----------+  +---+    +  +---+  +-----------+  +---+    Media Programming in Scala   */
-/*   *     |           |  |    \     /    |  |           | +|   |            Since 2015           */
-/*         |   +-------+  |     \   /     |  |   +-------+  |   |   .                        .    */
-/*         |   |          |      \ /      |  |   |          |   |         Aalto University        */
-/*       . |   +-------+  |   .   V   .   |  |   |   .      |   |      .   Espoo, Finland       . */
-/*  +      |           |  |   |\     /|   |  |   |          |   |                  .    +         */
-/*         +------+    |  |   | \   / |   |  |   |          |   |    +        *                   */
-/*    *           |    |  |   |  \ /  |   |  |   |      *   |   |                     .      +    */
-/*      -- +------+    |  |   |   V  *|   |  |   +-------+  |   +-------+ --    .                 */
-/*    ---  |           |  |   | .     |   |  |           |  |           |  ---      +      *      */
-/*  ------ +-----------+  +---+       +---+  +-----------+  +-----------+ ------               .  */
-/*                                                                                     .          */
-/*     T H E   S C A L A   M E D I A   C O M P U T A T I O N   L I B R A R Y      .         +     */
-/*                                                                                    *           */
+package smile.modeling
 
-package smcl.modeling
+import smile.infrastructure.MathUtils
 
+import scala.annotation.targetName
+import scala.collection.Seq
 
-import smcl.infrastructure.{FlatMap, MathUtils}
-import smcl.modeling.misc.Magnitude
-
-
-
-
-/**
- * Companion object for the [[Angle]] class.
- *
- * @author Aleksi Lukkarinen
- */
-object Angle {
-
+object Angle:
   /** Number of divisions to a full angle to get a radian. */
   val RadianDivisions: Double = 2.0 * math.Pi
 
@@ -38,7 +14,6 @@ object Angle {
 
   /** Number of divisions to a full angle to get a gradian. */
   val GradianDivisions: Int = 400
-
 
   /** Number of degrees in a radian. */
   val RadianInDegrees: Double =
@@ -64,7 +39,6 @@ object Angle {
   val GradianInRadians: Double =
     RadianDivisions / GradianDivisions
 
-
   /** A full angle in degrees. */
   val FullAngleInDegrees: Int = DegreeDivisions
 
@@ -80,19 +54,14 @@ object Angle {
   /** A full turn (i.e., a full angle). */
   val FullTurn: Angle = FullAngle
 
-
-  private
-  def divideCircleInDegsInto(numberOfDivisions: Int): Seq[Double] =
+  private def divideCircleInDegsInto(numberOfDivisions: Int): Seq[Double] =
     MathUtils.divideLength(FullAngleInDegrees, numberOfDivisions)
 
-  private
-  def divideCircleInRadsInto(numberOfDivisions: Int): Seq[Double] =
+  private def divideCircleInRadsInto(numberOfDivisions: Int): Seq[Double] =
     MathUtils.divideLength(FullAngleInRadians, numberOfDivisions)
 
-  private
-  def divideCircleInGradsInto(numberOfDivisions: Int): Seq[Double] =
+  private def divideCircleInGradsInto(numberOfDivisions: Int): Seq[Double] =
     MathUtils.divideLength(FullAngleInGradians, numberOfDivisions)
-
 
   /** Number of divisions to a full angle to get a straight angle. */
   val StraightAngleDivisions: Int = 2
@@ -126,10 +95,10 @@ object Angle {
   lazy val HalfTurnAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(StraightAngleDivisions)
 
-  /** Angles resulting from division of a full circle to half-turns, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to half-turns, given as [[Angle]] instances.
+    */
   lazy val HalfTurnAngles: Seq[Angle] =
     HalfTurnAnglesInDegrees.map(Angle(_))
-
 
   /** Number of divisions to a full angle to get a right angle. */
   val RightAngleDivisions: Int = 4
@@ -167,10 +136,11 @@ object Angle {
   lazy val QuarterTurnAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(RightAngleDivisions)
 
-  /** Angles resulting from division of a full circle to quarter-turns, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to quarter-turns, given as [[Angle]]
+    * instances.
+    */
   lazy val QuarterTurnAngles: Seq[Angle] =
     QuarterTurnAnglesInDegrees.map(Angle(_))
-
 
   /** Number of divisions to a full angle to get a sextant. */
   val SextantDivisions: Int = 6
@@ -206,7 +176,6 @@ object Angle {
   lazy val SextantAngles: Seq[Angle] =
     SextantAnglesInDegrees.map(Angle(_))
 
-
   /** Number of divisions to a full angle to get a clock position angle. */
   val ClockPositionAngleDivisions: Int = 12
 
@@ -225,22 +194,27 @@ object Angle {
   /** A clock position angle. */
   val ClockPositionAngle: Angle = Angle(ClockPositionAngleInDegrees)
 
-  /** Angles resulting from division of a full circle to clock position angles, measured in degrees. */
+  /** Angles resulting from division of a full circle to clock position angles, measured in degrees.
+    */
   lazy val ClockPositionAnglesInDegrees: Seq[Double] =
     divideCircleInDegsInto(ClockPositionAngleDivisions)
 
-  /** Angles resulting from division of a full circle to clock position angles, measured in radians. */
+  /** Angles resulting from division of a full circle to clock position angles, measured in radians.
+    */
   lazy val ClockPositionAnglesInRadians: Seq[Double] =
     divideCircleInRadsInto(ClockPositionAngleDivisions)
 
-  /** Angles resulting from division of a full circle to clock position angles, measured in gradians. */
+  /** Angles resulting from division of a full circle to clock position angles, measured in
+    * gradians.
+    */
   lazy val ClockPositionAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(ClockPositionAngleDivisions)
 
-  /** Angles resulting from division of a full circle to clock position angles, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to clock position angles, given as [[Angle]]
+    * instances.
+    */
   lazy val ClockPositionAngles: Seq[Angle] =
     ClockPositionAnglesInDegrees.map(Angle(_))
-
 
   /** Number of divisions to a full angle to get an hour angle. */
   val HourAngleDivisions: Int = 24
@@ -272,10 +246,10 @@ object Angle {
   lazy val HourAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(HourAngleDivisions)
 
-  /** Angles resulting from division of a full circle to hour angles, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to hour angles, given as [[Angle]] instances.
+    */
   lazy val HourAngles: Seq[Angle] =
     HourAnglesInDegrees.map(Angle(_))
-
 
   /** Number of divisions to a full angle to get a compass point. */
   val CompassPointDivisions: Int = 32
@@ -307,10 +281,11 @@ object Angle {
   lazy val CompassPointAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(CompassPointDivisions)
 
-  /** Angles resulting from division of a full circle to compass points, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to compass points, given as [[Angle]]
+    * instances.
+    */
   lazy val CompassPointAngles: Seq[Angle] =
     CompassPointAnglesInDegrees.map(Angle(_))
-
 
   /** Number of divisions to a full angle to get a binary degree. */
   val BinaryDegreeDivisions: Int = 256
@@ -342,10 +317,11 @@ object Angle {
   lazy val BinaryDegreeAnglesInGradians: Seq[Double] =
     divideCircleInGradsInto(BinaryDegreeDivisions)
 
-  /** Angles resulting from division of a full circle to binary degrees, given as [[Angle]] instances. */
+  /** Angles resulting from division of a full circle to binary degrees, given as [[Angle]]
+    * instances.
+    */
   lazy val BinaryDegreeAngles: Seq[Angle] =
     BinaryDegreeAnglesInDegrees.map(Angle(_))
-
 
   /** An angle that represents positive infinity. */
   lazy val PositiveInfinity: Angle = Angle(Double.PositiveInfinity)
@@ -530,477 +506,16 @@ object Angle {
   /** An angle of 2 * Pi radians, i.e., a full angle (360 degrees). */
   lazy val RadTwoPi: Angle = FullAngle
 
+class Angle(val inDegrees: Double):
+  def this(inRadians: Double, inDegrees: Boolean) =
+    this(if inDegrees then inRadians else inRadians * 180 / math.Pi)
 
-  /**
-   * Creates a new [[Angle]] instance on the basis of given angle value.
-   *
-   * @param valueInDegrees
-   */
-  @inline
-  def apply(valueInDegrees: Double): Angle = {
-    new Angle(valueInDegrees)
-  }
+  lazy val inRadians: Double = inDegrees * math.Pi / 180
 
-  /**
-   *
-   *
-   * @param valueInDegrees
-   */
-  @inline
-  def normalized(valueInDegrees: Double): Angle = {
-    apply(MathUtils.normalizeDegs(valueInDegrees))
-  }
-
-  /**
-   * Creates a new [[Angle]] instance on the basis of given angle value.
-   *
-   * @param valueInDegrees
-   */
-  @inline
-  def normalizedPos(valueInDegrees: Double): Angle = {
-    apply(MathUtils.normalizeToPosDegs(valueInDegrees))
-  }
-
-  /**
-   * Creates a new [[Angle]] instance on the basis of given angle value.
-   *
-   * @param valueInDegrees
-   */
-  @inline
-  def normalizedNeg(valueInDegrees: Double): Angle = {
-    apply(MathUtils.normalizeToNegDegs(valueInDegrees))
-  }
-
-  /**
-   *
-   *
-   * @param valueInRadians
-   *
-   * @return
-   */
-  @inline
-  def fromRads(valueInRadians: Double): Angle = {
-    val angleValue = math.toDegrees(valueInRadians)
-
-    apply(angleValue)
-  }
-
-  /**
-   *
-   *
-   * @param valueInGradians
-   *
-   * @return
-   */
-  @inline
-  def fromGrads(valueInGradians: Double): Angle = {
-    val angleValue = valueInGradians * GradianInDegrees
-
-    apply(angleValue)
-  }
-
-  /**
-   *
-   *
-   * @param sin
-   *
-   * @return
-   */
-  @inline
-  def fromSin(sin: Double): Angle = {
-    apply(MathUtils.asin(sin))
-  }
-
-  /**
-   *
-   *
-   * @param cos
-   *
-   * @return
-   */
-  @inline
-  def fromCos(cos: Double): Angle = {
-    apply(MathUtils.acos(cos))
-  }
-
-  /**
-   *
-   *
-   * @param tan
-   *
-   * @return
-   */
-  @inline
-  def fromTan(tan: Double): Angle = {
-    apply(MathUtils.atan(tan))
-  }
-
-}
-
-
-
-
-/**
- * Angle.
- *
- * @param inDegrees
- *
- * @author Aleksi Lukkarinen
- */
-case class Angle private(
-    inDegrees: Double)
-    extends Magnitude[Angle]
-        with FlatMap[Angle, Double]
-        with Ordered[Angle] {
-
-  /**
-   *
-   *
-   * @return
-   */
-  @inline
-  protected final
-  def value: Double = inDegrees
-
-  /** */
-  lazy val isCounterClockwise: Boolean =
-    isPositive
-
-  /** */
-  lazy val isClockwise: Boolean = isNegative
-
-  /** */
-  lazy val isCoterminalToZero: Boolean =
-    normalizedAbs == Angle.Zero
-
-  /** */
-  lazy val isAcute: Boolean =
-    isAbsBetweenExclExcl(0, Angle.RightAngleInDegrees)
-
-  /** */
-  lazy val isCoterminalToAcute: Boolean =
-    isCoterminallyBetweenExclExcl(
-      Angle.Zero, Angle.RightAngle)
-
-  /** */
-  lazy val isRight: Boolean =
-    math.abs(inDegrees) == Angle.RightAngleInDegrees
-
-  /** */
-  lazy val isCoterminalToRight: Boolean =
-    normalizedAbs == Angle.RightAngle
-
-  /** */
-  lazy val isObtuse: Boolean =
-    isAbsBetweenExclExcl(
-      Angle.RightAngleInDegrees,
-      Angle.StraightAngleInDegrees)
-
-  /** */
-  lazy val isCoterminalToObtuse: Boolean =
-    isCoterminallyBetweenExclExcl(
-      Angle.RightAngle, Angle.StraightAngle)
-
-  /** */
-  lazy val isStraight: Boolean =
-    math.abs(inDegrees) == Angle.StraightAngleInDegrees
-
-  /** */
-  lazy val isCoterminalToStraight: Boolean =
-    normalizedAbs == Angle.StraightAngle
-
-  /** */
-  lazy val isReflex: Boolean =
-    isAbsBetweenExclExcl(
-      Angle.StraightAngleInDegrees,
-      Angle.FullAngleInDegrees)
-
-  /** */
-  lazy val isCoterminalToReflex: Boolean =
-    isCoterminallyBetweenExclExcl(
-      Angle.StraightAngle, Angle.FullAngle)
-
-  /** */
-  lazy val isFull: Boolean =
-    math.abs(inDegrees) == Angle.FullAngleInDegrees
-
-  /** */
-  lazy val isOblique: Boolean =
-    inDegrees % Angle.RightAngleInDegrees == 0
-
-  /** The value of this angle in radians. */
-  lazy val inRadians: Double =
-    inDegrees * Angle.DegreeInRadians
-
-  /** The value of this angle in gradians. */
-  lazy val inGradians: Double =
-    inDegrees * Angle.DegreeInGradians
-
-  /** */
-  lazy val normalized: Angle =
-    Angle(MathUtils.normalizeDegs(inDegrees))
-
-  /** */
-  lazy val normalizedAbs: Angle =
-    Angle(math.abs(MathUtils.normalizeDegs(inDegrees)))
-
-  /** */
-  lazy val normalizedPos: Angle =
-    Angle(MathUtils.normalizeToPosDegs(inDegrees))
-
-  /** */
-  lazy val normalizedNeg: Angle =
-    Angle(MathUtils.normalizeToNegDegs(inDegrees))
-
-  /** */
   lazy val sin: Double = MathUtils.sinRads(inRadians)
-
-  /** */
-  lazy val sinh: Double = MathUtils.sinhRads(inRadians)
-
-  /** */
   lazy val cos: Double = MathUtils.cosRads(inRadians)
 
-  /** */
-  lazy val cosh: Double = MathUtils.coshRads(inRadians)
+  @targetName("divideAngle")
+  inline infix def /(divisor: Double): Angle = Angle(inDegrees / divisor)
 
-  /** */
-  lazy val tan: Double = MathUtils.tanRads(inRadians)
-
-  /** */
-  lazy val tanh: Double = MathUtils.tanhRads(inRadians)
-
-  /**
-   *
-   *
-   * @return
-   */
-  @inline
-  override final
-  def inverse: Angle = Angle(-inDegrees)
-
-  /**
-   *
-   *
-   * @param rangeStart
-   * @param rangeEnd
-   *
-   * @return
-   */
-  @inline
-  final
-  def isCoterminallyBetweenExclExcl(
-      rangeStart: Angle,
-      rangeEnd: Angle): Boolean = {
-
-    rangeStart.normalizedAbs < this.normalizedAbs &&
-        this.normalizedAbs < rangeEnd.normalizedAbs
-  }
-
-  /**
-   *
-   *
-   * @param rangeStart
-   * @param rangeEnd
-   *
-   * @return
-   */
-  @inline
-  final
-  def isCoterminallyBetweenExclIncl(
-      rangeStart: Angle,
-      rangeEnd: Angle): Boolean = {
-
-    rangeStart.normalizedAbs < this.normalizedAbs &&
-        this.normalizedAbs <= rangeEnd.normalizedAbs
-  }
-
-  /**
-   *
-   *
-   * @param rangeStart
-   * @param rangeEnd
-   *
-   * @return
-   */
-  @inline
-  final
-  def isCoterminallyBetweenInclExcl(
-      rangeStart: Angle,
-      rangeEnd: Angle): Boolean = {
-
-    rangeStart.normalizedAbs <= this.normalizedAbs &&
-        this.normalizedAbs < rangeEnd.normalizedAbs
-  }
-
-  /**
-   *
-   *
-   * @param rangeStart
-   * @param rangeEnd
-   *
-   * @return
-   */
-  @inline
-  final
-  def isCoterminallyBetweenInclIncl(
-      rangeStart: Angle,
-      rangeEnd: Angle): Boolean = {
-
-    rangeStart.normalizedAbs <= this.normalizedAbs &&
-        this.normalizedAbs <= rangeEnd.normalizedAbs
-  }
-
-  /**
-   *
-   *
-   * @param f
-   *
-   * @return
-   */
-  def map(f: (Double) => Double): Angle = {
-    Angle(f(inDegrees))
-  }
-
-  /**
-   *
-   *
-   * @param that
-   *
-   * @return
-   */
-  override
-  def compare(that: Angle): Int = {
-    inDegrees.compare(that.inDegrees)
-  }
-
-  /**
-   *
-   *
-   * @param other
-   *
-   * @return
-   */
-  @inline
-  final
-  def + (other: Angle): Angle = {
-    Angle(inDegrees + other.inDegrees)
-  }
-
-  /**
-   *
-   *
-   * @param other
-   *
-   * @return
-   */
-  @inline
-  final
-  def - (other: Angle): Angle = {
-    Angle(inDegrees - other.inDegrees)
-  }
-
-  /**
-   *
-   *
-   * @param other
-   *
-   * @return
-   */
-  @inline
-  final
-  def / (other: Angle): Double = {
-    inDegrees / other.inDegrees
-  }
-
-  /**
-   *
-   *
-   * @param angleInDegrees
-   *
-   * @return
-   */
-  @inline
-  final
-  def + (angleInDegrees: Double): Angle = {
-    Angle(inDegrees + angleInDegrees)
-  }
-
-  /**
-   *
-   *
-   * @param angleInDegrees
-   *
-   * @return
-   */
-  @inline
-  final
-  def - (angleInDegrees: Double): Angle = {
-    Angle(inDegrees - angleInDegrees)
-  }
-
-  /**
-   *
-   *
-   * @param factor
-   *
-   * @return
-   */
-  @inline
-  final
-  def * (factor: Double): Angle = {
-    Angle(inDegrees * factor)
-  }
-
-  /**
-   *
-   *
-   * @param divider
-   *
-   * @return
-   */
-  @inline
-  final
-  def / (divider: Double): Angle = {
-    Angle(inDegrees / divider)
-  }
-
-  /**
-   *
-   *
-   * @return
-   */
-  @inline
-  override final
-  def unary_+(): Angle = this
-
-  /**
-   * Returns the minimum of the given objects.
-   *
-   * @return
-   */
-  @inline
-  override final
-  def min(others: Angle*): Angle = (this +: others).min
-
-  /**
-   * Returns the maximum of the given objects.
-   *
-   * @return
-   */
-  @inline
-  override final
-  def max(others: Angle*): Angle = (this +: others).max
-
-  /**
-   *
-   *
-   * @return
-   */
-  @inline
-  override final
-  def toString: String = {
-    s"Angle($inDegrees deg)"
-  }
-
-}
+  override def toString: String = s"$inDegrees°"

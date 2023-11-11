@@ -1,102 +1,32 @@
-# .            .           .                   .                 +             .          +      #
-#         +-----------+  +---+    +  +---+  +-----------+  +---+    Media Programming in Scala   #
-#   *     |           |  |    \     /    |  |           | +|   |            Since 2015           #
-#         |   +-------+  |     \   /     |  |   +-------+  |   |   .                        .    #
-#         |   |          |      \ /      |  |   |          |   |         Aalto University        #
-#       . |   +-------+  |   .   V   .   |  |   |   .      |   |      .   Espoo, Finland       . #
-#  +      |           |  |   |\     /|   |  |   |          |   |                  .    +         #
-#         +------+    |  |   | \   / |   |  |   |          |   |    +        *                   #
-#    *           |    |  |   |  \ /  |   |  |   |      *   |   |                     .      +    #
-#      -- +------+    |  |   |   V  *|   |  |   +-------+  |   +-------+ --    .                 #
-#    ---  |           |  |   | .     |   |  |           |  |           |  ---      +      *      #
-#  ------ +-----------+  +---+       +---+  +-----------+  +-----------+ ------               .  #
-#                                                                                     .          #
-#     T H E   S C A L A   M E D I A   C O M P U T A T I O N   L I B R A R Y      .         +     #
-#                                                                                    *           #
+# macOS
+.DS_Store
 
-#
-# File ignoration patterns for Git
-#
-# The idea here is to explicitly ignore everything,
-# except the exact files allowed to be checked in.
-#
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+project/local-plugins.sbt
+.history
+.ensime
+.ensime_cache/
+.sbt-scripted/
+local.sbt
 
-/*
+# Bloop
+.bsp
 
-!/.idea
-!/common-resources
-!/doc
-!/node_modules
-!/project
-!/smcl-bitmap-viewer
-!/smcl-core
-!/smcl-library-info
-!/utils
-!/.gitattributes
-!/.gitignore
-!/build.sbt
-!/CHANGELOG
-!/CODE_OF_CONDUCT.md
-!/CONTRIBUTING.md
-!/LICENSE
-!/package.json
-!/README.md
+# VS Code
+.vscode/
 
-/.idea/libraries
-/.idea/modules
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/sbt.xml
-/.idea/scala_compiler.xml
-/.idea/tasks.xml
-/.idea/workspace.xml
+# Metals
+.bloop/
+.metals/
+metals.sbt
 
-/doc/*
-!/doc/release-notes
-
-/project/*
-!/project/build.properties
-!/project/build.sbt
-!/project/*.scala
-
-/smcl-library-info/*
-!/smcl-library-info/src
-
-/smcl-bitmap-viewer/*
-!/smcl-bitmap-viewer/js
-!/smcl-bitmap-viewer/jvm
-!/smcl-bitmap-viewer/shared
-!/smcl-bitmap-viewer/root-doc.txt
-
-/smcl-bitmap-viewer/js/*
-/smcl-bitmap-viewer/jvm/*
-/smcl-bitmap-viewer/shared/*
-!/smcl-bitmap-viewer/js/src
-!/smcl-bitmap-viewer/jvm/src
-!/smcl-bitmap-viewer/shared/src
-
-/smcl-core/*
-!/smcl-core/js
-!/smcl-core/jvm
-!/smcl-core/shared
-!/smcl-core/root-doc.txt
-
-/smcl-core/js/*
-/smcl-core/jvm/*
-/smcl-core/shared/*
-!/smcl-core/js/src
-!/smcl-core/jvm/src
-!/src
-
-**/.git/*
-**/.history/*
-**/__pycache__/*
-**/*___jb_tmp___
-**/.cache-main
-**/.DS_Store
-**/*.bak
-**/*.class
-**/*.log
-**/*.pyc
-**/*.pyo
-**/*~
+# IDEA
+.idea
+.idea_modules
+/.worksheet/

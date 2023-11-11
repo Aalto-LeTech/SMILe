@@ -1,205 +1,134 @@
-/* .            .           .                   .                 +             .          +      */
-/*         +-----------+  +---+    +  +---+  +-----------+  +---+    Media Programming in Scala   */
-/*   *     |           |  |    \     /    |  |           | +|   |            Since 2015           */
-/*         |   +-------+  |     \   /     |  |   +-------+  |   |   .                        .    */
-/*         |   |          |      \ /      |  |   |          |   |         Aalto University        */
-/*       . |   +-------+  |   .   V   .   |  |   |   .      |   |      .   Espoo, Finland       . */
-/*  +      |           |  |   |\     /|   |  |   |          |   |                  .    +         */
-/*         +------+    |  |   | \   / |   |  |   |          |   |    +        *                   */
-/*    *           |    |  |   |  \ /  |   |  |   |      *   |   |                     .      +    */
-/*      -- +------+    |  |   |   V  *|   |  |   +-------+  |   +-------+ --    .                 */
-/*    ---  |           |  |   | .     |   |  |           |  |           |  ---      +      *      */
-/*  ------ +-----------+  +---+       +---+  +-----------+  +-----------+ ------               .  */
-/*                                                                                     .          */
-/*     T H E   S C A L A   M E D I A   C O M P U T A T I O N   L I B R A R Y      .         +     */
-/*                                                                                    *           */
+package smile.pictures
 
-package smcl.pictures
+import smile.colors.Constants.MaximumOpacity
+import smile.infrastructure.{BufferAdapter, DrawingSurface}
+import smile.modeling.{BoundaryCalculator, NullBounds}
 
-
+import java.awt.image.BufferedImage
+import scala.annotation.tailrec
 import scala.collection.mutable
 
-import smcl.colors.ColorValidator
-import smcl.infrastructure.{BitmapBufferAdapter, DrawingSurfaceAdapter, InjectablesRegistry, PRF}
-import smcl.modeling.d2.BoundaryCalculator
+object Renderer:
+  def createBitmapFrom(elements: PictureElement*): Bitmap = createBitmapFrom(new Picture(elements))
 
+  def createBitmapFrom(picture: Picture): Bitmap =
+    if picture.elements.isEmpty then return new Bitmap(0, 0)
 
+    val bounds = picture.viewport match
+      case Some(viewport) => viewport.boundary
+      case None           => BoundaryCalculator.fromBoundaries(picture.elements)
 
-
-/**
-  *
-  * @author Aleksi Lukkarinen
-  */
-object Renderer
-    extends InjectablesRegistry {
-
-  /** The ColorValidator instance to be used by this object. */
-  protected
-  lazy val colorValidator: ColorValidator = {
-    injectable(InjectablesRegistry.IIdColorValidator).asInstanceOf[ColorValidator]
-  }
-
-  /** The BitmapValidator instance to be used by this object. */
-  protected
-  lazy val bitmapValidator: BitmapValidator = {
-    injectable(InjectablesRegistry.IIdBitmapValidator).asInstanceOf[BitmapValidator]
-  }
-
-  /**
-    *
-    * @param elements
-    *
-    * @return
-    */
-  def createBitmapFrom(elements: PictureElement*): Bitmap = {
-    if (elements.isEmpty)
-      return Bitmap(0, 0)
-
-    val bounds =
-      if (containsOnlyOnePictureThatDefinesViewport(elements))
-        elements.head.toPicture.viewport.get.boundary
-      else
-        BoundaryCalculator.fromBoundaries(elements)
-
-    val flooredWidth = bounds.width.floor
+    val flooredWidth  = bounds.width.floor
     val flooredHeight = bounds.height.floor
 
-    // println(s"${bounds.width.inPixels} x ${bounds.height.inPixels}  ---> $flooredWidth x $flooredHeight")
+    if flooredWidth < 1 || flooredHeight < 1 then return new Bitmap(0, 0)
 
-    if (flooredWidth < 1 || flooredHeight < 1)
-      return Bitmap(0, 0)
+    require(flooredWidth > 0 && flooredHeight > 0, "Bitmap width and height must be positive")
 
-    bitmapValidator.validateBitmapSize(flooredWidth, flooredHeight)
+    val buffer = new BufferAdapter(flooredWidth, flooredHeight)
 
-    val buffer: BitmapBufferAdapter =
-      PRF.createPlatformBitmapBuffer(flooredWidth, flooredHeight)
-
-    val (xOffsetToOrigoInPixels, yOffsetToOrigoInPixels) = {
+    val (xOffsetToOrigoInPixels, yOffsetToOrigoInPixels) =
       val upperLeftCorner = bounds.upperLeftCorner
 
-      val xOffset = -upperLeftCorner.xInPixels
-      val yOffset = -upperLeftCorner.yInPixels
+      val xOffset = -upperLeftCorner.x
+      val yOffset = -upperLeftCorner.y
 
       (xOffset, yOffset)
-    }
 
     renderElements(
-      elements,
-      buffer.drawingSurface,
-      xOffsetToOrigoInPixels, yOffsetToOrigoInPixels)
+      picture,
+      new DrawingSurface(buffer),
+      xOffsetToOrigoInPixels,
+      yOffsetToOrigoInPixels
+    )
 
-    Bitmap(buffer)
-  }
+    new Bitmap(buffer, bounds)
+  end createBitmapFrom
 
-  private
-  def containsOnlyOnePictureThatDefinesViewport(
-      elements: Seq[PictureElement]): Boolean = {
-
-    elements.lengthCompare(1) == 0 &&
-        elements.head.isPicture &&
-        elements.head.toPicture.viewport.isDefined
-  }
-
-  /**
-    *
-    * @param content
-    * @param targetDrawingSurface
-    * @param xOffsetToOrigoInPixels
-    * @param yOffsetToOrigoInPixels
-    */
-  private
-  def renderElements(
-      content: Seq[PictureElement],
-      targetDrawingSurface: DrawingSurfaceAdapter,
+  private def renderElements(
+      content: Picture,
+      targetDrawingSurface: DrawingSurface,
       xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double): Unit = {
+      yOffsetToOrigoInPixels: Double
+  ): Unit =
+    for element <- content.elements.reverse do
+      renderElement(
+        element,
+        targetDrawingSurface,
+        xOffsetToOrigoInPixels,
+        yOffsetToOrigoInPixels
+      )
 
-    val renderingQueue = mutable.Queue() ++ content.reverse
-    while (renderingQueue.nonEmpty) {
-      val contentItem = renderingQueue.dequeue()
-
-      if (contentItem.isRenderable) {
-        if (contentItem.isPicture) {
-          renderingQueue ++= contentItem.toPicture.elements.reverse
-        }
-        else {
-          renderElement(
-            contentItem,
-            targetDrawingSurface,
-            xOffsetToOrigoInPixels,
-            yOffsetToOrigoInPixels)
-        }
-      }
-    }
-  }
-
-  private
-  def renderElement(
+  private def renderElement(
       contentItem: PictureElement,
-      targetDrawingSurface: DrawingSurfaceAdapter,
+      targetDrawingSurface: DrawingSurface,
       xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double): Unit = {
+      yOffsetToOrigoInPixels: Double
+  ): Unit =
+    contentItem match
+      case arc: Arc =>
+        targetDrawingSurface.drawArc(
+          xOffsetToOrigoInPixels,
+          yOffsetToOrigoInPixels,
+          arc.position.x,
+          arc.position.y,
+          arc.width,
+          arc.height,
+          arc.startAngle,
+          arc.arcAngle,
+          arc.rotationAngle,
+          arc.hasBorder,
+          arc.hasFilling,
+          arc.color,
+          arc.fillColor
+        )
+      case bitmap: Bitmap =>
+        val topLeft  = bitmap.boundary.upperLeftCorner
+        val topLeftX = xOffsetToOrigoInPixels + topLeft.x
+        val topLeftY = yOffsetToOrigoInPixels + topLeft.y
 
-    if (contentItem.isArc) {
-      val arc = contentItem.asInstanceOf[Arc]
+        targetDrawingSurface.drawBitmap(
+          bitmap.buffer.get,
+          topLeftX,
+          topLeftY,
+          MaximumOpacity
+        )
+      case point: Point =>
+        targetDrawingSurface.drawPoint(
+          xOffsetToOrigoInPixels,
+          yOffsetToOrigoInPixels,
+          point.position.x,
+          point.position.y,
+          point.color
+        )
+      case polygon: Polygon =>
+        if polygon.pointsRelativeToCenterAtOrigo.isEmpty then return
+        else
 
-      targetDrawingSurface.drawArc(
-        xOffsetToOrigoInPixels, yOffsetToOrigoInPixels,
-        arc.position.xInPixels, arc.position.yInPixels,
-        arc.untransformedWidthInPixels, arc.untransformedHeightInPixels,
-        arc.startAngleInDegrees, arc.arcAngleInDegrees,
-        arc.rotationAngleInDegrees,
-        arc.horizontalScalingFactor, arc.verticalScalingFactor,
-        arc.hasBorder, arc.hasFilling,
-        arc.color, arc.fillColor)
-    }
-    else if (contentItem.isBitmap) {
-      val bmp = contentItem.asInstanceOf[Bitmap]
-      if (bmp.buffer.isEmpty)
-        return
+          val position = polygon.position
+          val points = polygon.pointsRelativeToCenterAtOrigo
 
-      val topLeft = bmp.boundary.upperLeftCorner
-      val topLeftX = xOffsetToOrigoInPixels + topLeft.xInPixels
-      val topLeftY = yOffsetToOrigoInPixels + topLeft.yInPixels
+          val (xs, ys) = points.unzip(p => (p.x, p.y))
 
-      targetDrawingSurface.drawBitmap(
-        bmp.buffer.get, topLeftX, topLeftY, ColorValidator.MaximumOpacity)
-    }
-    else if (contentItem.isPoint) {
-      val pnt = contentItem.asInstanceOf[Point]
+          val contentUpperLeftCorner = polygon.contentBoundary.upperLeftCorner
+          val contentLeftEdge        = contentUpperLeftCorner.x
+          val contentTopEdge         = contentUpperLeftCorner.y
 
-      targetDrawingSurface.drawPoint(
-        xOffsetToOrigoInPixels, yOffsetToOrigoInPixels,
-        pnt.position.xInPixels, pnt.position.yInPixels,
-        pnt.color)
-    }
-    else if (contentItem.isPolygon) {
-      val pgon = contentItem.asInstanceOf[Polygon]
-      if (pgon.pointsRelativeToCenterAtOrigo.isEmpty)
-        return
+          targetDrawingSurface.drawPolygon(
+            xOffsetToOrigoInPixels,
+            yOffsetToOrigoInPixels,
+            position.x,
+            position.y,
+            xs,
+            ys,
+            points.length,
+            contentLeftEdge,
+            contentTopEdge,
+            polygon.hasBorder,
+            polygon.hasFilling,
+            polygon.color,
+            polygon.fillColor
+          )
+      case text: Text => targetDrawingSurface.drawText(text)
 
-      val position = pgon.position
-      val points = pgon.pointsRelativeToCenterAtOrigo
-
-      val (xs, ys) = points.unzip[Double, Double]
-
-      val contentUpperLeftCorner = pgon.contentBoundary.upperLeftCorner
-      val contentLeftEdge = contentUpperLeftCorner.xInPixels
-      val contentTopEdge = contentUpperLeftCorner.yInPixels
-
-      targetDrawingSurface.drawPolygon(
-        xOffsetToOrigoInPixels, yOffsetToOrigoInPixels,
-        position.xInPixels, position.yInPixels,
-        xs, ys, points.length,
-        contentLeftEdge, contentTopEdge,
-        pgon.hasBorder,
-        pgon.hasFilling,
-        pgon.color,
-        pgon.fillColor)
-    }
-    else {
-      throw new IllegalStateException("Unknown image element")
-    }
-  }
-
-}
+  end renderElement

@@ -1,129 +1,9 @@
-/* .            .           .                   .                 +             .          +      */
-/*         +-----------+  +---+    +  +---+  +-----------+  +---+    Media Programming in Scala   */
-/*   *     |           |  |    \     /    |  |           | +|   |            Since 2015           */
-/*         |   +-------+  |     \   /     |  |   +-------+  |   |   .                        .    */
-/*         |   |          |      \ /      |  |   |          |   |         Aalto University        */
-/*       . |   +-------+  |   .   V   .   |  |   |   .      |   |      .   Espoo, Finland       . */
-/*  +      |           |  |   |\     /|   |  |   |          |   |                  .    +         */
-/*         +------+    |  |   | \   / |   |  |   |          |   |    +        *                   */
-/*    *           |    |  |   |  \ /  |   |  |   |      *   |   |                     .      +    */
-/*      -- +------+    |  |   |   V  *|   |  |   +-------+  |   +-------+ --    .                 */
-/*    ---  |           |  |   | .     |   |  |           |  |           |  ---      +      *      */
-/*  ------ +-----------+  +---+       +---+  +-----------+  +-----------+ ------               .  */
-/*                                                                                     .          */
-/*     T H E   S C A L A   M E D I A   C O M P U T A T I O N   L I B R A R Y      .         +     */
-/*                                                                                    *           */
-
-package smcl.infrastructure
-
+package smile.colors
 
 import scala.collection.immutable.Range.Inclusive
 
-
-
-
-/**
- *
- *
- * @author Aleksi Lukkarinen
- */
-trait Constants {
-
-  /** An empty string. */
-  protected[smcl]
-  val StrEmpty: String = ""
-
-  /** A string containing a single space. */
-  protected[smcl]
-  val StrSpace: String = " "
-
-  /** A string containing a single period. */
-  protected[smcl]
-  val StrPeriod: String = "."
-
-  /** A string containing a single comma. */
-  protected[smcl]
-  val StrComma: String = ","
-
-  /** A string containing a single colon. */
-  protected[smcl]
-  val StrColon: String = ":"
-
-  /** A string containing a single colon. */
-  protected[smcl]
-  val StrColonAsUnicode: String = "\u003A"
-
-  /** A string containing a single semicolon. */
-  protected[smcl]
-  val StrSemicolon: String = ";"
-
-  /** A string containing a single semicolon. */
-  protected[smcl]
-  val StrSemicolonAsUnicode: String = "\u003B"
-
-  /** A string containing a single left angle bracket. */
-  protected[smcl]
-  val StrLeftAngleBracket: String = "["
-
-  /** A string containing a single right angle bracket. */
-  protected[smcl]
-  val StrRightAngleBracket: String = "]"
-
-  /** A string containing a single zero. */
-  protected[smcl]
-  val StrZero: String = "0"
-
-  /** A string containing a new-line separator. */
-  protected[smcl]
-  val StrNewLine: String = System.lineSeparator
-
-  /** Length of a string containing a new-line separator. */
-  protected[smcl]
-  val StrNewLineLength: Int = System.lineSeparator.length
-
-  /** A string containing text "&lt;unnamed&gt;". */
-  protected[smcl]
-  val StrUnnamed: String = "<unnamed>"
-
-  /** Number of bits in one byte. */
-  protected[smcl]
-  val OneByte: Int = 8
-
-  /** Number of bits in two bytes. */
-  protected[smcl]
-  val TwoBytes: Int = OneByte + OneByte
-
-  /** Number of bits in three bytes. */
-  protected[smcl]
-  val ThreeBytes: Int = TwoBytes + OneByte
-
-  /** Bits belonging to the rightmost byte of an `Int`. */
-  protected[smcl]
-  val FirstByte: Int = 0xFF
-
-  /** Bits belonging to the second-rightmost byte of an `Int`. */
-  protected[smcl]
-  val SecondByte: Int = FirstByte << OneByte
-
-  /** Bits belonging to the second-leftmost byte of an `Int`. */
-  protected[smcl]
-  val ThirdByte: Int = SecondByte << OneByte
-
-  /** Bits belonging to the leftmost byte of an `Int`. */
-  protected[smcl]
-  val FourthByte: Int = ThirdByte << OneByte
-
-  /** The value range that a single unsigned byte can represent. */
-  protected[smcl]
-  val ByteRange: Inclusive = 0 to 255
-
-  /** 2 * PI */
-  protected[smcl]
-  val PI2: Double = 2 * Math.PI
-
-
-
-  // TODO: Replace the usages of the constants below with the facilities of Angle
+object Constants:
+  // DEGREES
 
   /** Number of degrees representing a full circle. */
   val FullCircleInDegrees: Int = 360
@@ -143,4 +23,134 @@ trait Constants {
   /** 60 degrees in radians. */
   val Deg60InRad: Double = Math.PI / 3.0
 
-}
+  // COLORS
+
+  private val ColorValueRange: Inclusive = 0 to 255
+
+  /** An RGB color component value representing minimal amount of red. */
+  val MinimumRed: Int = ColorValueRange.start
+
+  /** An RGB color component value representing maximal amount of red. */
+  val MaximumRed: Int = ColorValueRange.end
+
+  /** Range for valid values of the red color component of an RGB color. */
+  val RedRange: Range.Inclusive = ColorValueRange
+
+  /** An RGB color component value representing minimal amount of green. */
+  val MinimumGreen: Int = ColorValueRange.start
+
+  /** An RGB color component value representing maximal amount of green. */
+  val MaximumGreen: Int = ColorValueRange.end
+
+  /** Range for valid values of the green color component of an RGB color. */
+  val GreenRange: Range.Inclusive = ColorValueRange
+
+  /** An RGB color component value representing minimal amount of blue. */
+  val MinimumBlue: Int = ColorValueRange.start
+
+  /** An RGB color component value representing maximal amount of blue. */
+  val MaximumBlue: Int = ColorValueRange.end
+
+  /** Range for valid values of the blue color component of an RGB color. */
+  val BlueRange: Range.Inclusive = ColorValueRange
+
+  /** A color component value representing minimal amount of gray. */
+  val MinimumGray: Int = ColorValueRange.start
+
+  /** A color component value representing maximal amount of gray. */
+  val MaximumGray: Int = ColorValueRange.end
+
+  /** Range for valid values of gray color component. */
+  val GrayRange: Range.Inclusive = ColorValueRange
+
+  /** An RGBA color component value representing minimal opacity. */
+  val MinimumOpacity: Int = ColorValueRange.start
+
+  /** Color component value representing minimal opacity. */
+  val FullyTransparent: Int = MinimumOpacity
+
+  /** An RGBA color component value representing maximal opacity. */
+  val MaximumOpacity: Int = ColorValueRange.end
+
+  /** Color component value representing maximal opacity. */
+  val FullyOpaque: Int = MaximumOpacity
+
+  /** Range for valid values of the opacity color component of an RGBA color. */
+  val OpacityRange: Range.Inclusive = ColorValueRange
+
+  /** Color component value representing normalized minimal amount of red. */
+  val MinimumNormalizedRed: Double = 0.0
+
+  /** Color component value representing normalized maximal amount of red. */
+  val MaximumNormalizedRed: Double = 1.0
+
+  /** Color component value representing normalized minimal amount of green. */
+  val MinimumNormalizedGreen: Double = 0.0
+
+  /** Color component value representing normalized maximal amount of green. */
+  val MaximumNormalizedGreen: Double = 1.0
+
+  /** Color component value representing normalized minimal amount of blue. */
+  val MinimumNormalizedBlue: Double = 0.0
+
+  /** Color component value representing normalized maximal amount of blue. */
+  val MaximumNormalizedBlue: Double = 1.0
+
+  /** Color component value representing normalized minimal amount of gray. */
+  val MinimumNormalizedGray: Double = 0.0
+
+  /** Color component value representing normalized maximal amount of gray. */
+  val MaximumNormalizedGray: Double = 1.0
+
+  /** Color component value representing normalized minimal opacity. */
+  val MinimumNormalizedOpacity: Double = 0.0
+
+  /** Color component value representing normalized maximal opacity. */
+  val MaximumNormalizedOpacity: Double = 1.0
+
+  /** Color component value representing start of the hue cycle. */
+  val MinimumHSIHue: Double = 0.0
+
+  /** Color component value representing end of the hue cycle. */
+  val MaximumHSIHue: Double = FullCircleInDegrees.toDouble
+
+  /** Color component value representing an undefined hue (at the center of the hue cycle). */
+  val UndefinedHSIHue: Double = Double.NaN
+
+  /** Color component value representing minimal amount of saturation. */
+  val MinimumHSISaturation: Double = 0.0
+
+  /** Color component value representing maximal amount of saturation. */
+  val MaximumHSISaturation: Double = 1.0
+
+  /** Color component value representing minimal amount of intensity. */
+  val MinimumHSIIntensity: Double = ColorValueRange.start.toDouble
+
+  /** Color component value representing maximal amount of intensity. */
+  val MaximumHSIIntensity: Double = ColorValueRange.end.toDouble
+
+  /** Color component value representing start of the hue cycle. */
+  val MinimumHSVHue: Double = 0.0
+
+  /** Color component value representing end of the hue cycle. */
+  val MaximumHSVHue: Double = FullCircleInDegrees.toDouble
+
+  /** Color component value representing an undefined hue (at the center of the hue cycle). */
+  val UndefinedHSVHue: Double = Double.NaN
+
+  /** Color component value representing minimal amount of saturation. */
+  val MinimumHSVSaturation: Double = 0.0
+
+  /** Color component value representing maximal amount of saturation. */
+  val MaximumHSVSaturation: Double = 1.0
+
+  /** Color component value representing minimal amount of intensity. */
+  val MinimumHSVValue: Double = ColorValueRange.start.toDouble
+
+  /** Color component value representing maximal amount of intensity. */
+  val MaximumHSVValue: Double = ColorValueRange.end.toDouble
+
+  val DefaultShadingFactor = 0.1
+
+  /** The factor the amount of which colors are tinted by the lighter() method. */
+  val DefaultTintingFactor = 0.1
