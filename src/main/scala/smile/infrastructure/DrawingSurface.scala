@@ -46,8 +46,14 @@ class DrawingSurface(val owner: BufferAdapter):
     val normalizedOpacity: Float = opacity.toFloat / MaximumOpacity
 
     owner.withGraphics2D: g =>
+      g.setTransform(
+        AffineTransform.getTranslateInstance(
+          xInPixels,
+          yInPixels
+        )
+      )
       g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, normalizedOpacity))
-      g.drawImage(bitmap, x, y, null)
+      g.drawImage(bitmap, 0, 0, null)
 
   def drawArc(
       xOffsetToOrigoInPixels: Double,

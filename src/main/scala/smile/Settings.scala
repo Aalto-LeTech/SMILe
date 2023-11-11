@@ -1,7 +1,7 @@
 package smile
 
 import smile.colors.Color
-import smile.colors.PresetColor.{Black, LightBlue, White}
+import smile.colors.PresetColor.{Black, LightBlue, Transparent}
 import smile.modeling.{Angle, HorizontalAlignment, Pos, PositionType, VerticalAlignment}
 
 object Settings:
@@ -23,7 +23,7 @@ object Settings:
   var DefaultArcStartAngleInDegrees: Int                       = 0
   var DefaultArcAngleInDegrees: Int                            = 180
   var ColorVisualizationTileSideLengthInPixels: Int            = 80
-  var DefaultBackgroundColor: Color                            = White
+  var DefaultBackgroundColor: Color                            = Transparent
   var DefaultPrimaryColor: Color                               = Black
   var DefaultSecondaryColor: Color                             = LightBlue
   var DefaultPositionType: PositionType                        = PositionType.Center
