@@ -1,6 +1,6 @@
 package smile.colors
 
-import smile.colors.Constants.*
+import smile.infrastructure.Constants.*
 
 import java.awt.Color as LowLevelColor
 
@@ -23,7 +23,7 @@ object Color:
     val hue: Double =
       if isGray(red, green, blue) then // Not defined for grays
         UndefinedHSIHue
-      else {
+      else
         val RedMinusGreen = red - green
         val RedMinusBlue  = red - blue
 
@@ -33,7 +33,6 @@ object Color:
           Math.toDegrees(Math.acos((RedMinusGreen + RedMinusBlue) / (2.0 * root)))
 
         if green >= blue then angleCandidate else FullCircleInDegrees - angleCandidate
-      }
 
     val saturation: Double =
       if isBlack(red, green, blue) then MinimumHSISaturation

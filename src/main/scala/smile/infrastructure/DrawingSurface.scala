@@ -1,7 +1,7 @@
 package smile.infrastructure
 
 import smile.colors.Color
-import smile.colors.Constants.MaximumOpacity
+import smile.infrastructure.Constants.MaximumOpacity
 import smile.pictures.Text
 
 import java.awt.geom.{AffineTransform, Arc2D, Ellipse2D, Path2D}

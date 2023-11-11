@@ -1,4 +1,4 @@
-package smile.colors
+package smile.infrastructure
 
 import scala.collection.immutable.Range.Inclusive
 

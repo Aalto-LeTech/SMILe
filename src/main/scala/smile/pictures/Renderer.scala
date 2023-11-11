@@ -1,6 +1,6 @@
 package smile.pictures
 
-import smile.colors.Constants.MaximumOpacity
+import smile.infrastructure.Constants.MaximumOpacity
 import smile.infrastructure.{BufferAdapter, DrawingSurface}
 import smile.modeling.{BoundaryCalculator, NullBounds}
 
@@ -106,7 +106,7 @@ object Renderer:
         else
 
           val position = polygon.position
-          val points = polygon.pointsRelativeToCenterAtOrigo
+          val points   = polygon.pointsRelativeToCenterAtOrigo
 
           val (xs, ys) = points.unzip(p => (p.x, p.y))
 
