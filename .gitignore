@@ -86,7 +86,7 @@
 /smcl-core/shared/*
 !/smcl-core/js/src
 !/smcl-core/jvm/src
-!/smcl-core/shared/src
+!/src
 
 **/.git/*
 **/.history/*

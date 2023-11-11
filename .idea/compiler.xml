@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="1.8">
+    <bytecodeTargetLevel>
       <module name="smcl" target="1.8" />
       <module name="smcl-bitmap-viewerJS" target="1.8" />
       <module name="smcl-bitmap-viewerJVM" target="1.8" />
