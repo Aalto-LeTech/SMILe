@@ -43,6 +43,12 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       boundary.moveBy(newPosition.x, newPosition.y)
     )
 
+  override def moveBy(xOffset: Double, yOffset: Double): PictureElement =
+    new Bitmap(
+      buffer,
+      boundary.moveBy(xOffset, yOffset)
+    )
+
   def deepCopy(): Bitmap = new Bitmap(buffer.deepCopy, boundary)
 
   def getColor(x: Int, y: Int): Color = buffer.pixelColor(x, y)
