@@ -53,8 +53,8 @@ class Polygon(
     val lrX = contentBoundary.lowerRightCorner.x
     val lrY = contentBoundary.lowerRightCorner.y
 
-    val refX = referencePointRelativeToCenterAtOrigo.x
-    val refY = referencePointRelativeToCenterAtOrigo.y
+//    val refX = referencePointRelativeToCenterAtOrigo.x
+//    val refY = referencePointRelativeToCenterAtOrigo.y
 
     Seq(
       position + contentBoundary.upperLeftCorner,

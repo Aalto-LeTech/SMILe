@@ -1,7 +1,20 @@
 package smile.pictures
 
-import smile.Settings.{DefaultHorizontalAlignment, DefaultPaddingInPixels, DefaultPositionType, DefaultVerticalAlignment}
-import smile.modeling.{Bounds, HorizontalAlignment, Pos, PositionType, Side, SideIndependentAlignment, VerticalAlignment}
+import smile.Settings.{
+  DefaultHorizontalAlignment,
+  DefaultPaddingInPixels,
+  DefaultPositionType,
+  DefaultVerticalAlignment
+}
+import smile.modeling.{
+  Bounds,
+  HorizontalAlignment,
+  Pos,
+  PositionType,
+  Side,
+  SideIndependentAlignment,
+  VerticalAlignment
+}
 
 import scala.annotation.tailrec
 
@@ -133,8 +146,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     val newUpperLeftCornerX = boundary.lowerRightCorner.x + padding
     val newUpperLeftCornerY = boundary.verticalPositionFor(alignment, content.boundary)
 
-    // TODO: This should be PositionType.UpperLeftCorner
-    addAt(content, newUpperLeftCornerX, newUpperLeftCornerY, PositionType.Center)
+    addAt(content, newUpperLeftCornerX, newUpperLeftCornerY, PositionType.UpperLeftCorner)
   end addToRight
 
   /** @param content
@@ -164,7 +176,6 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       padding: Double = DefaultPaddingInPixels,
       alignment: VerticalAlignment = DefaultVerticalAlignment
   ): Picture =
-
     val newUpperLeftCornerX =
       boundary.upperLeftCorner.x - padding - content.boundary.width.inPixels
 
