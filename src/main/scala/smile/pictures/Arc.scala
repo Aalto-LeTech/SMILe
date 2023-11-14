@@ -2,11 +2,11 @@ package smile.pictures
 
 import smile.Settings.*
 import smile.colors.Color
-import smile.modeling.{Angle, Bounds, Pos, Transformer}
+import smile.modeling.{Angle, Bounds, Pos, TransformationMatrix, Transformer}
 
 /** An [[Arc]] is a [[VectorGraphic]] that is defined by a position, a width, a height, a start
   * angle, an arc angle,
-  * @param pos
+  * @param position
   *   center point of the [[Arc]]
   * @param width
   *   width in pixels
@@ -37,10 +37,11 @@ class Arc(
     val hasBorder: Boolean,
     val hasFilling: Boolean,
     val color: Color,
-    val fillColor: Color
+    val fillColor: Color,
+    override val transformationMatrix: TransformationMatrix
 ) extends VectorGraphic:
   def this(
-      position: Pos = DefaultPosition,
+      pos: Pos = DefaultPosition,
       width: Double,
       height: Double,
       startAngle: Double = Angle.Zero.inDegrees,
@@ -51,7 +52,7 @@ class Arc(
       fillColor: Color = DefaultSecondaryColor
   ) =
     this(
-      position,
+      pos,
       width,
       height,
       startAngle,
@@ -60,8 +61,10 @@ class Arc(
       hasBorder,
       hasFilling,
       color,
-      fillColor
+      fillColor,
+      TransformationMatrix.identity
     )
+
   override lazy val position: Pos = pos
 
   private[this] lazy val corners: Seq[Pos] =
@@ -95,18 +98,10 @@ class Arc(
   override lazy val boundary: Bounds = Bounds(upperLeftCorner, lowerRightCorner)
 
   override def copy(newPosition: Pos): PictureElement =
-    new Arc(
-      newPosition,
-      width,
-      height,
-      startAngle,
-      arcAngle,
-      rotationAngle,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
-    )
+    internalCopy(newPosition = newPosition)
+
+  override def copy(newMatrix: TransformationMatrix): PictureElement =
+    internalCopy(newMatrix = newMatrix)
 
   private def internalCopy(
       newPosition: Pos = position,
@@ -118,7 +113,8 @@ class Arc(
       newHasBorder: Boolean = hasBorder,
       newHasFilling: Boolean = hasFilling,
       newColor: Color = color,
-      newFillColor: Color = fillColor
+      newFillColor: Color = fillColor,
+      newMatrix: TransformationMatrix = transformationMatrix
   ): Arc =
     val limitedArcAngle =
       newArcAngle
@@ -135,41 +131,6 @@ class Arc(
       newHasBorder,
       newHasFilling,
       newColor,
-      newFillColor
-    )
-
-  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Arc =
-    internalCopy(newWidth = horizontalFactor * width, newHeight = verticalFactor * height)
-
-  override def scaleBy(
-      horizontalFactor: Double,
-      verticalFactor: Double,
-      relativityPoint: Pos
-  ): Arc =
-    val scaledPosition =
-      Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint)
-    internalCopy(
-      newPosition = scaledPosition,
-      newWidth = horizontalFactor * width,
-      newHeight = verticalFactor * height
-    )
-
-  private def decideNewRotationAngleFor(newRotationAngle: Double): Double =
-    // If this arc represents a circle, rotating it should not have any effect on
-    // its appearance, and thus the rotation angle can (and must) be zero all the
-    // time. (The position can, of course, change if the rotation is not performed
-    // around the arc's center point, but that is irrelevant here.)
-    if isCircle then Angle.Zero.inDegrees
-    else rotationAngle + newRotationAngle
-
-  override def rotateBy(angle: Double, centerOfRotation: Pos): Arc =
-    internalCopy(
-      newPosition = Transformer.rotate(position, angle, centerOfRotation),
-      newRotationAngle = decideNewRotationAngleFor(angle)
-    )
-
-  override def rotateByAroundOrigo(angle: Double): Arc =
-    internalCopy(
-      newPosition = Transformer.rotate(position, angle),
-      newRotationAngle = decideNewRotationAngleFor(angle)
+      newFillColor,
+      newMatrix
     )

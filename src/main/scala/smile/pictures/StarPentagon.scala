@@ -138,7 +138,7 @@ object StarPentagon:
     val innerPoints = cuspRadiusPointsFor(cuspRadiusInPixels).toList
     val points      = intersperse(outerPoints, innerPoints)
 
-    Polygon(center, points, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
   /** @param circumRadiusInPixels
     * @param cuspRadiusInPixels
@@ -174,7 +174,7 @@ object StarPentagon:
     val innerPoints = cuspRadiusPointsFor(cuspRadiusInPixels).toList
     val points      = intersperse(outerPoints, innerPoints)
 
-    Polygon(center, points, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
   /** @param cuspRadiusInPixels
     *

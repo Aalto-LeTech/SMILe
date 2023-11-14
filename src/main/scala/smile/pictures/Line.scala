@@ -31,7 +31,6 @@ object Line:
     new Polygon(
       start + (halfWidth, halfHeight),
       points,
-      Pos.Origo,
       hasBorder = true,
       hasFilling = false,
       color = color,

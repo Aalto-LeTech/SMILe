@@ -7,12 +7,14 @@ import smile.Settings.{
   DefaultVerticalAlignment
 }
 import smile.modeling.{
+  BoundaryCalculator,
   Bounds,
   HorizontalAlignment,
   Pos,
   PositionType,
   Side,
   SideIndependentAlignment,
+  TransformationMatrix,
   VerticalAlignment
 }
 
@@ -24,9 +26,11 @@ object Transformable:
 
 trait Transformable[TransformableType <: Transformable[TransformableType]]:
   lazy val boundary: Bounds
-  lazy val position: Pos = boundary.center
+  val transformationMatrix: TransformationMatrix = TransformationMatrix.identity
+  lazy val position: Pos                         = boundary.center
 
   def copy(newPosition: Pos): TransformableType
+  def copy(newMatrix: TransformationMatrix): TransformableType
 
   def toBitmap: Bitmap = this match
     case picture: Picture =>
@@ -75,9 +79,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       yCoordinateInPixels: Double,
       positionType: PositionType = DefaultPositionType
   ): Picture =
-    addToFront(
-      content.moveTo(xCoordinateInPixels, yCoordinateInPixels, positionType)
-    ) // TODO: this breaks the position of a polygon
+    addToFront(content.moveTo(xCoordinateInPixels, yCoordinateInPixels, positionType))
 
   def addToFront(toPrepend: Transformable[?]): Picture =
     prependTo(toPrepend.asPicture, this.asPicture)
@@ -98,7 +100,12 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       contentToPrepend: Picture,
       existingContent: Picture
   ): Picture =
-    new Picture(contentToPrepend.elements ++ existingContent.elements)
+    // new Picture(contentToPrepend.elements ++ existingContent.elements)
+
+    val n = new Picture(contentToPrepend.elements ++ existingContent.elements)
+//    println(n.elements.map(_.position))
+//    println(n.elements.map(_.getClass.getName))
+    n
 
   def addTo(
       targetSide: Side,
@@ -392,7 +399,9 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     * @return
     */
   def scaleTo(targetWidth: Double, targetHeight: Double): TransformableType =
-    scaleTo(targetWidth, targetHeight, position)
+    val horizontalFactor = targetWidth / boundary.width.inPixels
+    val verticalFactor   = targetHeight / boundary.height.inPixels
+    copy(transformationMatrix.scale(horizontalFactor, verticalFactor))
 
   /** Scales this object to given width and height in relation to a given point.
     *
@@ -401,7 +410,11 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     * @param relativityPoint
     * @return
     */
-  def scaleTo(targetWidth: Double, targetHeight: Double, relativityPoint: Pos): TransformableType =
+  def scaleTo(
+      targetWidth: Double,
+      targetHeight: Double,
+      relativityPoint: Pos
+  ): TransformableType =
     val horizontalFactor = targetWidth / boundary.width.inPixels
     val verticalFactor   = targetHeight / boundary.height.inPixels
 
@@ -451,7 +464,9 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     * @param verticalFactor
     * @return
     */
-  def scaleBy(horizontalFactor: Double, verticalFactor: Double): TransformableType
+  def scaleBy(horizontalFactor: Double, verticalFactor: Double): TransformableType = copy(
+    transformationMatrix.scale(horizontalFactor, verticalFactor)
+  )
 
   /** Scales this object by given horizontal and vertical factors in relation to a given point.
     *
@@ -464,7 +479,8 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       horizontalFactor: Double,
       verticalFactor: Double,
       relativityPoint: Pos
-  ): TransformableType
+  ): TransformableType =
+    copy(transformationMatrix.scale(horizontalFactor, verticalFactor, relativityPoint))
 
   // Cropping
   // -------------------------------------------------------------------------------------------- \\
@@ -519,7 +535,10 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     *   the point around which to rotate
     * @return
     */
-  def rotateBy(angle: Double, centerOfRotation: Pos): TransformableType
+  def rotateBy(angle: Double, centerOfRotation: Pos): TransformableType =
+    copy(
+      transformationMatrix.rotate(-angle, centerOfRotation)
+    )
 
   /** Rotates this object around a given point by 90 degrees clockwise.
     */
@@ -537,6 +556,8 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     *   in degrees
     * @return
     */
-  def rotateByAroundOrigo(angle: Double): TransformableType
+  def rotateByAroundOrigo(angle: Double): TransformableType = copy(
+    transformationMatrix.rotate(-angle, boundary.center)
+  )
 
 end Transformable

@@ -1,60 +1,52 @@
 package smile.pictures
 
 import smile.colors.Color
-import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
+import smile.modeling.{BoundaryCalculator, Bounds, Pos, TransformationMatrix, Transformer}
 
 class Polygon(
     pos: Pos,
-    val pointsRelativeToCenterAtOrigo: Seq[Pos],
-    val referencePointRelativeToCenterAtOrigo: Pos,
+    val points: Seq[Pos],
     val hasBorder: Boolean,
     val hasFilling: Boolean,
     val color: Color,
-    val fillColor: Color
+    val fillColor: Color,
+    override val transformationMatrix: TransformationMatrix = TransformationMatrix.identity
 ) extends VectorGraphic:
 
-  override def copy(newPosition: Pos): PictureElement = new Polygon(
-    newPosition,
-    pointsRelativeToCenterAtOrigo,
-    referencePointRelativeToCenterAtOrigo,
-    hasBorder,
-    hasFilling,
-    color,
-    fillColor
-  )
+  override def copy(newPosition: Pos): PictureElement =
+    internalCopy(newPosition = newPosition)
+
+  override def copy(newMatrix: TransformationMatrix): PictureElement =
+    internalCopy(newMatrix = newMatrix)
 
   private def internalCopy(
       newPosition: Pos = position,
-      newPointsRelativeToCenterAtOrigo: Seq[Pos] = pointsRelativeToCenterAtOrigo,
-      newReferencePointRelativeToCenterAtOrigo: Pos = referencePointRelativeToCenterAtOrigo,
+      newPoints: Seq[Pos] = points,
       newHasBorder: Boolean = hasBorder,
       newHasFilling: Boolean = hasFilling,
       newColor: Color = color,
-      newFillColor: Color = fillColor
+      newFillColor: Color = fillColor,
+      newMatrix: TransformationMatrix = transformationMatrix
   ): Polygon =
     new Polygon(
       newPosition,
-      newPointsRelativeToCenterAtOrigo,
-      newReferencePointRelativeToCenterAtOrigo,
+      newPoints,
       newHasBorder,
       newHasFilling,
       newColor,
-      newFillColor
+      newFillColor,
+      newMatrix
     )
 
   override lazy val position: Pos = pos
 
-  val contentBoundary: Bounds =
-    BoundaryCalculator.fromPositions(pointsRelativeToCenterAtOrigo)
+  lazy val contentBoundary: Bounds = BoundaryCalculator.fromPositions(points)
 
   lazy val corners: Seq[Pos] =
     val ulX = contentBoundary.upperLeftCorner.x
     val ulY = contentBoundary.upperLeftCorner.y
     val lrX = contentBoundary.lowerRightCorner.x
     val lrY = contentBoundary.lowerRightCorner.y
-
-//    val refX = referencePointRelativeToCenterAtOrigo.x
-//    val refY = referencePointRelativeToCenterAtOrigo.y
 
     Seq(
       position + contentBoundary.upperLeftCorner,
@@ -70,44 +62,3 @@ class Polygon(
 
   override lazy val boundary: Bounds =
     Bounds(upperLeftCorner, lowerRightCorner)
-
-  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Polygon =
-    internalCopy(
-      newPointsRelativeToCenterAtOrigo = pointsRelativeToCenterAtOrigo.map(
-        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-      ),
-      newReferencePointRelativeToCenterAtOrigo = referencePointRelativeToCenterAtOrigo
-        .scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-    )
-
-  override def scaleBy(
-      horizontalFactor: Double,
-      verticalFactor: Double,
-      relativityPoint: Pos
-  ): Polygon =
-    internalCopy(
-      newPosition = Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint),
-      newPointsRelativeToCenterAtOrigo = pointsRelativeToCenterAtOrigo.map(
-        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-      ),
-      newReferencePointRelativeToCenterAtOrigo = referencePointRelativeToCenterAtOrigo
-        .scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-    )
-
-  override def rotateBy(angle: Double, centerOfRotation: Pos): Polygon =
-    internalCopy(
-      newPosition = Transformer.rotate(position, angle, centerOfRotation),
-      newPointsRelativeToCenterAtOrigo =
-        pointsRelativeToCenterAtOrigo.map(_.rotateByAroundOrigo(angle)),
-      newReferencePointRelativeToCenterAtOrigo =
-        referencePointRelativeToCenterAtOrigo.rotateByAroundOrigo(angle)
-    )
-
-  override def rotateByAroundOrigo(angle: Double): Polygon =
-    internalCopy(
-      newPosition = Transformer.rotate(position, angle),
-      newPointsRelativeToCenterAtOrigo =
-        pointsRelativeToCenterAtOrigo.map(_.rotateByAroundOrigo(angle)),
-      newReferencePointRelativeToCenterAtOrigo =
-        referencePointRelativeToCenterAtOrigo.rotateByAroundOrigo(angle)
-    )

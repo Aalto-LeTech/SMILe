@@ -104,7 +104,6 @@ object Rectangle:
     Polygon(
       center,
       cornerPoints,
-      referencePointRelativeToCenterAtOrigo = Pos.Origo,
       hasBorder,
       hasFilling,
       color,

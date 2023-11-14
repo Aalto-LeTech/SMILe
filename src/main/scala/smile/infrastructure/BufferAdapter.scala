@@ -18,7 +18,7 @@ class BufferAdapter(private val buffer: BufferedImage):
   lazy val height: Int = buffer.getHeight
 
   val ScalingMethod: Int   = Image.SCALE_AREA_AVERAGING
-  val TransformMethod: Int = AffineTransformOp.TYPE_BILINEAR
+  val TransformMethod: Int = AffineTransformOp.TYPE_BICUBIC
 
   def deepCopy: BufferAdapter =
     val newBuffer = new BufferAdapter(width, height)
@@ -203,7 +203,19 @@ class BufferAdapter(private val buffer: BufferedImage):
       if Settings.DrawingIsAntiAliased then RenderingHints.VALUE_TEXT_ANTIALIAS_ON
       else RenderingHints.VALUE_TEXT_ANTIALIAS_OFF
 
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textAntialiasingState)
+    g.setRenderingHint(
+      RenderingHints.KEY_TEXT_ANTIALIASING,
+      textAntialiasingState
+    )
+
+    g.setRenderingHint(
+      RenderingHints.KEY_ALPHA_INTERPOLATION,
+      RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY
+    )
+    g.setRenderingHint(
+      RenderingHints.KEY_RENDERING,
+      RenderingHints.VALUE_RENDER_QUALITY
+    )
   end setDefaultGraphics2DProperties
 
   def iterateLocations(callback: (Int, Int) => Unit): Unit =
