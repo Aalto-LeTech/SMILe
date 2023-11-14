@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="images/smile.svg" width="400" alt="" />
+    <img src="images/smile.png" width="500" alt="" />
     <h1>Scala Media Interactive Learning</h1>
 </div>
 
