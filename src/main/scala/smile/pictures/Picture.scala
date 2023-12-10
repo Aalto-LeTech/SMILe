@@ -3,8 +3,14 @@ package smile.pictures
 import smile.colors.Color
 import smile.modeling.*
 
-class Picture(val elements: Seq[PictureElement], val viewport: Option[Viewport])
-    extends Transformable[Picture]:
+class Picture(
+    val elements: Seq[PictureElement],
+    val viewport: Option[Viewport]
+) extends Transformable[Picture]:
+  val referencePoints: Map[String, Pos] = elements
+    .collect:
+      case e: ReferencePoint => e.name -> e.position
+    .toMap
 
   def this(element: PictureElement) =
     this(Seq(element), None)
