@@ -2,7 +2,6 @@ package smile.infrastructure
 
 import smile.colors.Color
 import smile.infrastructure.Constants.MaximumOpacity
-import smile.modeling.{Pos, TransformationMatrix}
 import smile.pictures.Text
 
 import java.awt.geom.{AffineTransform, Arc2D, Ellipse2D, Path2D}
@@ -65,8 +64,7 @@ class DrawingSurface(val owner: BufferAdapter):
       hasBorder: Boolean,
       hasFilling: Boolean,
       color: Color,
-      fillColor: Color,
-      transformationMatrix: TransformationMatrix
+      fillColor: Color
   ): Unit =
     val representsCompleteCycle = arcAngle.abs >= 360
 
@@ -74,20 +72,12 @@ class DrawingSurface(val owner: BufferAdapter):
       if representsCompleteCycle then new Ellipse2D.Double(0, 0, width, height)
       else new Arc2D.Double(0, 0, width, height, startAngle, arcAngle, Arc2D.OPEN)
 
+    val offsetX = xOffsetToOrigo + xPositionOfCenter - width / 2
+    val offsetY = yOffsetToOrigo + yPositionOfCenter - height / 2
+
     owner.withGraphics2D: g =>
-      val translate = TransformationMatrix.identity.translate(
-        xOffsetToOrigo + xPositionOfCenter - transformationMatrix.applyToWidth(width) / 2,
-        yOffsetToOrigo + yPositionOfCenter - transformationMatrix.applyToHeight(height) / 2
-      )
-      g.setTransform(
-        translate
-          .rotate(
-            rotationAngleInDegrees,
-            Pos(xPositionOfCenter, yPositionOfCenter)
-          )
-          .multiply(transformationMatrix)
-          .toAffineTransform
-      )
+      g.translate(offsetX, offsetY)
+      g.rotate(rotationAngleInDegrees.toRadians)
 
       g.setStroke(HairlineStroke)
 
@@ -152,8 +142,7 @@ class DrawingSurface(val owner: BufferAdapter):
       hasBorder: Boolean,
       hasFilling: Boolean,
       color: Color,
-      fillColor: Color,
-      transformationMatrix: TransformationMatrix
+      fillColor: Color
   ): Unit =
     if numberOfCoordinatesToDraw == 1 then
       drawPoint(
@@ -169,9 +158,7 @@ class DrawingSurface(val owner: BufferAdapter):
 
       owner.withGraphics2D: g =>
         g.setStroke(HairlineStroke)
-
-        val translate = TransformationMatrix.identity.translate(xOffset, yOffset)
-        g.setTransform(translate.multiply(transformationMatrix).toAffineTransform)
+        g.translate(xOffset, yOffset)
 
         val path = Path2D.Double()
         for i <- 0 until numberOfCoordinatesToDraw do
@@ -186,14 +173,22 @@ class DrawingSurface(val owner: BufferAdapter):
         g.draw(path)
 
   def drawLine(
+      xOffsetToOrigo: Double,
+      yOffsetToOrigo: Double,
+      xPosition: Double,
+      yPosition: Double,
       fromX: Double,
       fromY: Double,
       toX: Double,
       toY: Double,
       color: Color
   ): Unit =
+    val xOffset = xOffsetToOrigo + xPosition
+    val yOffset = yOffsetToOrigo + yPosition
+
     val path = Path2D.Double()
     owner.withGraphics2D: g =>
+      g.translate(xOffset, yOffset)
       g.setColor(color.toAWTColor)
       path.moveTo(fromX, fromY)
       path.lineTo(toX, toY)
@@ -206,19 +201,22 @@ class DrawingSurface(val owner: BufferAdapter):
       y: Double,
       color: Color
   ): Unit =
-    val offsetX = xOffsetToOrigo.floor.toInt + x.floor.toInt
-    val offsetY = yOffsetToOrigo.floor.toInt + y.floor.toInt
+    val offsetX = xOffsetToOrigo + x
+    val offsetY = yOffsetToOrigo + y
 
     owner.withGraphics2D: g =>
+      g.translate(offsetX, offsetY)
+
       g.setStroke(HairlineStroke)
       g.setColor(color.toAWTColor)
-      g.drawLine(offsetX, offsetY, offsetX, offsetY)
+      g.drawLine(0, 0, 0, 0)
 
   def drawText(text: Text): Unit =
-    val x = text.position.x.floor.toInt
-    val y = text.position.y.floor.toInt + text.boundary.height.inPixels.toInt
+    val x = text.position.x
+    val y = text.position.y + text.boundary.height.inPixels
 
     owner.withGraphics2D: g =>
+      g.translate(x, y)
       g.setColor(text.color.toAWTColor)
       g.setFont(text.font)
-      g.drawString(text.content, x, y)
+      g.drawString(text.content, 0, 0)

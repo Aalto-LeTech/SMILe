@@ -2,7 +2,7 @@ package smile.pictures
 
 import smile.Settings.DefaultPrimaryColor
 import smile.colors.{Color, PresetColor}
-import smile.modeling.Pos
+import smile.modeling.*
 
 object Line:
   def apply(startX: Double, startY: Double, endX: Double, endY: Double): VectorGraphic =

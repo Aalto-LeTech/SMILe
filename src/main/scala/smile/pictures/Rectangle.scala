@@ -1,11 +1,6 @@
 package smile.pictures
 
-import smile.Settings.{
-  DefaultPrimaryColor,
-  DefaultSecondaryColor,
-  ShapesHaveBordersByDefault,
-  ShapesHaveFillingsByDefault
-}
+import smile.Settings.{DefaultPrimaryColor, DefaultSecondaryColor, ShapesHaveBordersByDefault, ShapesHaveFillingsByDefault}
 import smile.colors.Color
 import smile.modeling.Pos
 

@@ -1,7 +1,7 @@
 package smile.pictures
 
 import smile.colors.Color
-import smile.modeling.{BoundaryCalculator, Bounds, Pos, TransformationMatrix, Transformer}
+import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
 class Polygon(
     pos: Pos,
@@ -9,15 +9,17 @@ class Polygon(
     val hasBorder: Boolean,
     val hasFilling: Boolean,
     val color: Color,
-    val fillColor: Color,
-    override val transformationMatrix: TransformationMatrix = TransformationMatrix.identity
+    val fillColor: Color
 ) extends VectorGraphic:
 
-  override def copy(newPosition: Pos): PictureElement =
-    internalCopy(newPosition = newPosition)
-
-  override def copy(newMatrix: TransformationMatrix): PictureElement =
-    internalCopy(newMatrix = newMatrix)
+  override def copy(newPosition: Pos): PictureElement = new Polygon(
+    newPosition,
+    points,
+    hasBorder,
+    hasFilling,
+    color,
+    fillColor
+  )
 
   private def internalCopy(
       newPosition: Pos = position,
@@ -25,8 +27,7 @@ class Polygon(
       newHasBorder: Boolean = hasBorder,
       newHasFilling: Boolean = hasFilling,
       newColor: Color = color,
-      newFillColor: Color = fillColor,
-      newMatrix: TransformationMatrix = transformationMatrix
+      newFillColor: Color = fillColor
   ): Polygon =
     new Polygon(
       newPosition,
@@ -34,13 +35,13 @@ class Polygon(
       newHasBorder,
       newHasFilling,
       newColor,
-      newFillColor,
-      newMatrix
+      newFillColor
     )
 
   override lazy val position: Pos = pos
 
-  lazy val contentBoundary: Bounds = BoundaryCalculator.fromPositions(points)
+  val contentBoundary: Bounds =
+    BoundaryCalculator.fromPositions(points)
 
   lazy val corners: Seq[Pos] =
     val ulX = contentBoundary.upperLeftCorner.x
@@ -56,9 +57,38 @@ class Polygon(
     )
 
   lazy val upperLeftCorner: Pos  = corners.head
-  lazy val upperRightCorner: Pos = corners.tail.head
   lazy val lowerRightCorner: Pos = corners.tail.tail.head
-  lazy val lowerLeftCorner: Pos  = corners.tail.tail.tail.head
 
   override lazy val boundary: Bounds =
     Bounds(upperLeftCorner, lowerRightCorner)
+
+  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Polygon =
+    internalCopy(
+      newPoints = points.map(
+        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+      )
+    )
+
+  override def scaleBy(
+      horizontalFactor: Double,
+      verticalFactor: Double,
+      relativityPoint: Pos
+  ): Polygon =
+    internalCopy(
+      newPosition = Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint),
+      newPoints = points.map(
+        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+      )
+    )
+
+  override def rotateBy(angle: Double, centerOfRotation: Pos): Polygon =
+    internalCopy(
+      newPosition = Transformer.rotate(position, angle, centerOfRotation),
+      newPoints = points.map(_.rotateBy(angle, centerOfRotation))
+    )
+
+  override def rotateByAroundOrigo(angle: Double): Polygon =
+    internalCopy(
+      newPosition = Transformer.rotate(position, angle),
+      newPoints = points.map(_.rotateByAroundOrigo(angle))
+    )

@@ -2,7 +2,7 @@ package smile.pictures
 
 import smile.colors.Color
 import smile.infrastructure.{BufferAdapter, ResourceFactory}
-import smile.modeling.{AffineTransformation, Bounds, Pos, TransformationMatrix}
+import smile.modeling.{AffineTransformation, BoundaryCalculator, Bounds, Pos}
 
 object Bitmap:
   type LocationToColorGenerator = (Int, Int) => Color
@@ -30,11 +30,7 @@ object Bitmap:
   def apply(elements: PictureElement*): Bitmap = Renderer.createBitmapFrom(elements*)
   def apply(picture: Picture): Bitmap          = Renderer.createBitmapFrom(picture)
 
-class Bitmap(
-    val buffer: BufferAdapter,
-    bounds: Bounds,
-    override val transformationMatrix: TransformationMatrix = TransformationMatrix.identity
-) extends PictureElement:
+class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
   def this(width: Int, height: Int) =
     this(new BufferAdapter(width, height), Bounds(Pos.Origo, width, height))
     require(width > 0 && height > 0, "Width and height must be positive")
@@ -44,15 +40,7 @@ class Bitmap(
   override def copy(newPosition: Pos): PictureElement =
     new Bitmap(
       buffer,
-      boundary.moveBy(newPosition.x, newPosition.y),
-      transformationMatrix
-    )
-
-  override def copy(newMatrix: TransformationMatrix): PictureElement =
-    new Bitmap(
-      buffer,
-      boundary,
-      newMatrix
+      boundary.moveBy(newPosition.x, newPosition.y)
     )
 
   override def moveBy(xOffset: Double, yOffset: Double): PictureElement =
@@ -115,18 +103,15 @@ class Bitmap(
       relativityPoint
     )
 
-  override def scaleTo(targetWidth: Double, targetHeight: Double): Bitmap =
-    scaleTo(targetWidth, targetHeight, position)
-
   override def scaleTo(targetWidth: Double, targetHeight: Double, relativityPoint: Pos): Bitmap =
     if targetWidth == 0 || targetHeight == 0 then return Bitmap()
 
-//    val newCenter = Pos.Origo
-    val newCenter = boundary.center.scaleBy(
-      targetWidth / buffer.width,
-      targetHeight / buffer.height,
-      relativityPoint
-    )
+    val newCenter =
+      boundary.center.scaleBy(
+        targetWidth / buffer.width,
+        targetHeight / buffer.height,
+        relativityPoint
+      )
 
     val newBuffer = buffer.scaleTo(targetWidth, targetHeight, newCenter)
     val newUpperLeftCorner =
@@ -137,11 +122,7 @@ class Bitmap(
 
     val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
 
-    new Bitmap(
-      newBuffer,
-      newBounds,
-      transformationMatrix
-    )
+    new Bitmap(newBuffer, newBounds)
   end scaleTo
 
   override def rotateBy(angle: Double, centerOfRotation: Pos): Bitmap =
@@ -153,13 +134,14 @@ class Bitmap(
       )
     )
 
-    val newCenter = boundary.center.rotateByAroundOrigo(angle)
-    val newUpperLeftCorner =
-      newCenter - (newBuffer.width / 2.0, newBuffer.height / 2.0)
-    val newLowerRightCorner =
-      newUpperLeftCorner + (newBuffer.width - 1.0, newBuffer.height - 1.0)
-
-    val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
+    val oldPositions = Seq(
+      boundary.upperLeftCorner,
+      boundary.upperRightCorner,
+      boundary.lowerLeftCorner,
+      boundary.lowerRightCorner
+    )
+    val newBounds =
+      BoundaryCalculator.fromPositions(oldPositions.map(_.rotateBy(angle, centerOfRotation)))
 
     new Bitmap(newBuffer, newBounds)
   end rotateBy
@@ -271,7 +253,7 @@ class Bitmap(
         val pixel = scaledImage.pixelColor(x, y)
         val luminance =
           (pixel.red * 0.2126 + pixel.green * 0.7152 + pixel.blue * 0.0722).toInt
-        val asciiIndex = (luminance * (asciiLookupTable.length - 1) / 255)
+        val asciiIndex = (luminance * (asciiLookupTable.length - 1) / 255).toInt
         asciiArt.append(asciiLookupTable(asciiIndex))
         asciiArt.append("  ")
       asciiArt.append('\n')

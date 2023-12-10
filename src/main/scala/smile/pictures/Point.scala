@@ -15,7 +15,8 @@ class Point(pos: Pos, val color: Color) extends VectorGraphic:
       horizontalFactor: Double,
       verticalFactor: Double,
       relativityPoint: Pos
-  ): PictureElement = this
+  ): PictureElement =
+    copy(newPosition = position.scaleBy(horizontalFactor, verticalFactor, relativityPoint))
 
 //  override def rotateBy(angle: Double, centerOfRotation: Pos): Point =
 //    copy(newPosition = position.rotateBy(angle, centerOfRotation))

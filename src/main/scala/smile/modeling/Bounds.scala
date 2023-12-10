@@ -34,6 +34,9 @@ case class Bounds(upperLeftCorner: Pos, lowerRightCorner: Pos):
 
   lazy val center: Pos = upperLeftCorner.centerBetween(lowerRightCorner)
 
+  lazy val upperRightCorner: Pos = Pos(lowerRightCorner.x, upperLeftCorner.y)
+  lazy val lowerLeftCorner: Pos  = Pos(upperLeftCorner.x, lowerRightCorner.y)
+
   inline def moveBy(xOffset: Double, yOffset: Double): Bounds =
     Bounds(
       upperLeftCorner.moveBy(xOffset, yOffset),

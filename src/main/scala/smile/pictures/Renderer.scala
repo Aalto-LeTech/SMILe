@@ -80,8 +80,7 @@ object Renderer:
           arc.hasBorder,
           arc.hasFilling,
           arc.color,
-          arc.fillColor,
-          arc.transformationMatrix
+          arc.fillColor
         )
       case bitmap: Bitmap =>
         val topLeft  = bitmap.boundary.upperLeftCorner
@@ -103,11 +102,17 @@ object Renderer:
           point.color
         )
       case polygon: Polygon =>
-        if polygon.points.nonEmpty then
-          val position  = polygon.position
-          val points    = polygon.points
+        if polygon.points.isEmpty then return
+        else
 
-          val (xs, ys) = polygon.points.unzip(p => (p.x, p.y))
+          val position = polygon.position
+          val points   = polygon.points
+
+          val (xs, ys) = points.unzip(p => (p.x, p.y))
+
+//          val contentUpperLeftCorner = polygon.contentBoundary.upperLeftCorner
+//          val contentLeftEdge        = contentUpperLeftCorner.x
+//          val contentTopEdge         = contentUpperLeftCorner.y
 
           targetDrawingSurface.drawPolygon(
             xOffsetToOrigoInPixels,
@@ -117,11 +122,12 @@ object Renderer:
             xs,
             ys,
             points.length,
+//            contentLeftEdge,
+//            contentTopEdge,
             polygon.hasBorder,
             polygon.hasFilling,
             polygon.color,
-            polygon.fillColor,
-            polygon.transformationMatrix
+            polygon.fillColor
           )
       case text: Text => targetDrawingSurface.drawText(text)
 
