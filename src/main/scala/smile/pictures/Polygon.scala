@@ -5,8 +5,7 @@ import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
 class Polygon(
     pos: Pos,
-    val pointsRelativeToCenterAtOrigo: Seq[Pos],
-    val referencePointRelativeToCenterAtOrigo: Pos,
+    val points: Seq[Pos],
     val hasBorder: Boolean,
     val hasFilling: Boolean,
     val color: Color,
@@ -15,8 +14,7 @@ class Polygon(
 
   override def copy(newPosition: Pos): PictureElement = new Polygon(
     newPosition,
-    pointsRelativeToCenterAtOrigo,
-    referencePointRelativeToCenterAtOrigo,
+    points,
     hasBorder,
     hasFilling,
     color,
@@ -25,8 +23,7 @@ class Polygon(
 
   private def internalCopy(
       newPosition: Pos = position,
-      newPointsRelativeToCenterAtOrigo: Seq[Pos] = pointsRelativeToCenterAtOrigo,
-      newReferencePointRelativeToCenterAtOrigo: Pos = referencePointRelativeToCenterAtOrigo,
+      newPoints: Seq[Pos] = points,
       newHasBorder: Boolean = hasBorder,
       newHasFilling: Boolean = hasFilling,
       newColor: Color = color,
@@ -34,8 +31,7 @@ class Polygon(
   ): Polygon =
     new Polygon(
       newPosition,
-      newPointsRelativeToCenterAtOrigo,
-      newReferencePointRelativeToCenterAtOrigo,
+      newPoints,
       newHasBorder,
       newHasFilling,
       newColor,
@@ -45,16 +41,13 @@ class Polygon(
   override lazy val position: Pos = pos
 
   val contentBoundary: Bounds =
-    BoundaryCalculator.fromPositions(pointsRelativeToCenterAtOrigo)
+    BoundaryCalculator.fromPositions(points)
 
   lazy val corners: Seq[Pos] =
     val ulX = contentBoundary.upperLeftCorner.x
     val ulY = contentBoundary.upperLeftCorner.y
     val lrX = contentBoundary.lowerRightCorner.x
     val lrY = contentBoundary.lowerRightCorner.y
-
-//    val refX = referencePointRelativeToCenterAtOrigo.x
-//    val refY = referencePointRelativeToCenterAtOrigo.y
 
     Seq(
       position + contentBoundary.upperLeftCorner,
@@ -64,20 +57,16 @@ class Polygon(
     )
 
   lazy val upperLeftCorner: Pos  = corners.head
-  lazy val upperRightCorner: Pos = corners.tail.head
   lazy val lowerRightCorner: Pos = corners.tail.tail.head
-  lazy val lowerLeftCorner: Pos  = corners.tail.tail.tail.head
 
   override lazy val boundary: Bounds =
     Bounds(upperLeftCorner, lowerRightCorner)
 
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Polygon =
     internalCopy(
-      newPointsRelativeToCenterAtOrigo = pointsRelativeToCenterAtOrigo.map(
+      newPoints = points.map(
         _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-      ),
-      newReferencePointRelativeToCenterAtOrigo = referencePointRelativeToCenterAtOrigo
-        .scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+      )
     )
 
   override def scaleBy(
@@ -87,27 +76,19 @@ class Polygon(
   ): Polygon =
     internalCopy(
       newPosition = Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint),
-      newPointsRelativeToCenterAtOrigo = pointsRelativeToCenterAtOrigo.map(
+      newPoints = points.map(
         _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
-      ),
-      newReferencePointRelativeToCenterAtOrigo = referencePointRelativeToCenterAtOrigo
-        .scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+      )
     )
 
   override def rotateBy(angle: Double, centerOfRotation: Pos): Polygon =
     internalCopy(
       newPosition = Transformer.rotate(position, angle, centerOfRotation),
-      newPointsRelativeToCenterAtOrigo =
-        pointsRelativeToCenterAtOrigo.map(_.rotateByAroundOrigo(angle)),
-      newReferencePointRelativeToCenterAtOrigo =
-        referencePointRelativeToCenterAtOrigo.rotateByAroundOrigo(angle)
+      newPoints = points.map(_.rotateBy(angle, centerOfRotation))
     )
 
   override def rotateByAroundOrigo(angle: Double): Polygon =
     internalCopy(
       newPosition = Transformer.rotate(position, angle),
-      newPointsRelativeToCenterAtOrigo =
-        pointsRelativeToCenterAtOrigo.map(_.rotateByAroundOrigo(angle)),
-      newReferencePointRelativeToCenterAtOrigo =
-        referencePointRelativeToCenterAtOrigo.rotateByAroundOrigo(angle)
+      newPoints = points.map(_.rotateByAroundOrigo(angle))
     )

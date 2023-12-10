@@ -2,7 +2,7 @@ package smile.pictures
 
 import smile.colors.Color
 import smile.infrastructure.{BufferAdapter, ResourceFactory}
-import smile.modeling.{AffineTransformation, Bounds, Pos}
+import smile.modeling.{AffineTransformation, BoundaryCalculator, Bounds, Pos}
 
 object Bitmap:
   type LocationToColorGenerator = (Int, Int) => Color
@@ -106,12 +106,12 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
   override def scaleTo(targetWidth: Double, targetHeight: Double, relativityPoint: Pos): Bitmap =
     if targetWidth == 0 || targetHeight == 0 then return Bitmap()
 
-    val newCenter = Pos.Origo
-//      boundary.center.scaleBy(
-//        targetWidth / buffer.width,
-//        targetHeight / buffer.height,
-//        relativityPoint
-//      )
+    val newCenter =
+      boundary.center.scaleBy(
+        targetWidth / buffer.width,
+        targetHeight / buffer.height,
+        relativityPoint
+      )
 
     val newBuffer = buffer.scaleTo(targetWidth, targetHeight, newCenter)
     val newUpperLeftCorner =
@@ -134,13 +134,14 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       )
     )
 
-    val newCenter = boundary.center.rotateByAroundOrigo(angle)
-    val newUpperLeftCorner =
-      newCenter - (newBuffer.width / 2.0, newBuffer.height / 2.0)
-    val newLowerRightCorner =
-      newUpperLeftCorner + (newBuffer.width - 1.0, newBuffer.height - 1.0)
-
-    val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
+    val oldPositions = Seq(
+      boundary.upperLeftCorner,
+      boundary.upperRightCorner,
+      boundary.lowerLeftCorner,
+      boundary.lowerRightCorner
+    )
+    val newBounds =
+      BoundaryCalculator.fromPositions(oldPositions.map(_.rotateBy(angle, centerOfRotation)))
 
     new Bitmap(newBuffer, newBounds)
   end rotateBy

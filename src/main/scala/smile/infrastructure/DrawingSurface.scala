@@ -14,7 +14,6 @@ extension (value: Double)
 
 class DrawingSurface(val owner: BufferAdapter):
   /** A ``BasicStroke`` instance to represent as thin line as possible (i.e., width = 1 pixel). */
-  // TODO: Change to 0 if no anti-aliasing
   private val HairlineStroke = new BasicStroke(1)
 
   /** A static ``Arc2D.Double`` instance to minimize creation of new objects during rendering. */
@@ -40,9 +39,6 @@ class DrawingSurface(val owner: BufferAdapter):
       yInPixels: Double,
       opacity: Int
   ): Boolean =
-    val x = xInPixels.floor.toInt
-    val y = yInPixels.floor.toInt
-
     val normalizedOpacity: Float = opacity.toFloat / MaximumOpacity
 
     owner.withGraphics2D: g =>
@@ -56,104 +52,42 @@ class DrawingSurface(val owner: BufferAdapter):
       g.drawImage(bitmap, 0, 0, null)
 
   def drawArc(
-      xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double,
-      xPositionOfCenterInPixels: Double,
-      yPositionOfCenterInPixels: Double,
-      widthInPixels: Double,
-      heightInPixels: Double,
-      startAngleInDegrees: Double,
-      arcAngleInDegrees: Double,
+      xOffsetToOrigo: Double,
+      yOffsetToOrigo: Double,
+      xPositionOfCenter: Double,
+      yPositionOfCenter: Double,
+      width: Double,
+      height: Double,
+      startAngle: Double,
+      arcAngle: Double,
       rotationAngleInDegrees: Double,
       hasBorder: Boolean,
       hasFilling: Boolean,
       color: Color,
       fillColor: Color
   ): Unit =
-    val scaledWidth  = (widthInPixels.floor).truncate
-    val scaledHeight = (heightInPixels.floor).truncate
+    val representsCompleteCycle = arcAngle.abs >= 360
 
-    val upperLeftXOffsetFromCenter = (scaledWidth / 2.0).truncate
-    val upperLeftYOffsetFromCenter = (scaledHeight / 2.0).truncate
+    val shape =
+      if representsCompleteCycle then new Ellipse2D.Double(0, 0, width, height)
+      else new Arc2D.Double(0, 0, width, height, startAngle, arcAngle, Arc2D.OPEN)
 
-    val representsCompleteCycle = arcAngleInDegrees.abs >= 360
+    val offsetX = xOffsetToOrigo + xPositionOfCenter - width / 2
+    val offsetY = yOffsetToOrigo + yPositionOfCenter - height / 2
 
     owner.withGraphics2D: g =>
-      g.setTransform(
-        AffineTransform.getTranslateInstance(
-          xOffsetToOrigoInPixels.truncate + xPositionOfCenterInPixels.truncate,
-          yOffsetToOrigoInPixels.truncate + yPositionOfCenterInPixels.truncate
-        )
-      )
+      g.translate(offsetX, offsetY)
+      g.rotate(rotationAngleInDegrees.toRadians)
 
       g.setStroke(HairlineStroke)
 
-      val xDifference =
-        xOffsetToOrigoInPixels.truncate + xPositionOfCenterInPixels - upperLeftXOffsetFromCenter
-      val yDifference =
-        yOffsetToOrigoInPixels.truncate + yPositionOfCenterInPixels - upperLeftYOffsetFromCenter
+      if hasFilling then
+        g.setColor(fillColor.toAWTColor)
+        g.fill(shape)
 
-      // If drawing a complete cycle, check if the cycle represents a small circle
-      if representsCompleteCycle && Set(1.0, 2.0).contains(
-          scaledWidth
-        ) && scaledWidth == scaledHeight
-      then
-
-        // -------------------------------------------------------------------------
-        // Special case for small circles
-        //
-
-        if hasBorder || hasFilling then
-          g.setColor(if hasBorder then color.toAWTColor else fillColor.toAWTColor)
-
-          val size = if scaledWidth == 1.0 then 1 else 2
-          g.fillRect(
-            upperLeftXOffsetFromCenter.toInt - size,
-            upperLeftYOffsetFromCenter.toInt - size,
-            size,
-            size
-          )
-      else
-        // -------------------------------------------------------------------------
-        // General case for all arcs
-        //
-
-        if rotationAngleInDegrees != 0.0 then g.rotate(rotationAngleInDegrees)
-
-        val shapes: List[(Color, Ellipse2D | Arc2D)] =
-          (hasFilling, hasBorder, representsCompleteCycle) match
-            case (true, false, true)  => List((fillColor, StaticEllipse))
-            case (false, true, true)  => List((color, StaticEllipse))
-            case (true, false, false) => List((fillColor, StaticArc))
-            case (false, true, false) => List((color, StaticArc))
-            case _                    => List((fillColor, StaticEllipse), (color, StaticEllipse))
-
-        shapes.foreach:
-          case (color, shape) =>
-            g.setColor(color.toAWTColor)
-
-            val ulX =
-              if xDifference > 0 then -upperLeftXOffsetFromCenter + 0.5
-              else -upperLeftXOffsetFromCenter - 0.5
-            val ulY =
-              if yDifference > 0 then -upperLeftYOffsetFromCenter + 0.5
-              else -upperLeftYOffsetFromCenter - 0.5
-
-            shape match
-              case ellipse: Ellipse2D =>
-                ellipse.setFrame(ulX, ulY, scaledWidth - 1, scaledHeight - 1)
-              case arc: Arc2D =>
-                arc.setArc(
-                  ulX,
-                  ulY,
-                  scaledWidth - 1,
-                  scaledHeight - 1,
-                  startAngleInDegrees,
-                  arcAngleInDegrees,
-                  Arc2D.OPEN
-                )
-
-            if color == fillColor then g.fill(shape) else g.draw(shape)
+      if hasBorder then
+        g.setColor(color.toAWTColor)
+        g.draw(shape)
   end drawArc
 
   def drawRoundedRectangle(
@@ -198,15 +132,13 @@ class DrawingSurface(val owner: BufferAdapter):
       g.drawPolyline(xs, ys, numberOfCoordinatesToDraw)
 
   def drawPolygon(
-      xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double,
-      xPositionInPixels: Double,
-      yPositionInPixels: Double,
+      xOffsetToOrigo: Double,
+      yOffsetToOrigo: Double,
+      xPosition: Double,
+      yPosition: Double,
       xCoordinates: Seq[Double],
       yCoordinates: Seq[Double],
       numberOfCoordinatesToDraw: Int,
-      leftEdgeInPixels: Double,
-      topEdgeInPixels: Double,
       hasBorder: Boolean,
       hasFilling: Boolean,
       color: Color,
@@ -214,20 +146,19 @@ class DrawingSurface(val owner: BufferAdapter):
   ): Unit =
     if numberOfCoordinatesToDraw == 1 then
       drawPoint(
-        xOffsetToOrigoInPixels,
-        yOffsetToOrigoInPixels,
-        xPositionInPixels + xCoordinates.head,
-        yPositionInPixels + yCoordinates.head,
+        xOffsetToOrigo,
+        yOffsetToOrigo,
+        xPosition + xCoordinates.head,
+        yPosition + yCoordinates.head,
         color
       )
     else
-      val xOffset = xOffsetToOrigoInPixels + xPositionInPixels
-      val yOffset = yOffsetToOrigoInPixels + yPositionInPixels
+      val xOffset = xOffsetToOrigo + xPosition
+      val yOffset = yOffsetToOrigo + yPosition
 
       owner.withGraphics2D: g =>
         g.setStroke(HairlineStroke)
-
-        g.setTransform(AffineTransform.getTranslateInstance(xOffset, yOffset))
+        g.translate(xOffset, yOffset)
 
         val path = Path2D.Double()
         for i <- 0 until numberOfCoordinatesToDraw do
@@ -242,41 +173,50 @@ class DrawingSurface(val owner: BufferAdapter):
         g.draw(path)
 
   def drawLine(
-      fromXInPixels: Double,
-      fromYInPixels: Double,
-      toXInPixels: Double,
-      toYInPixels: Double,
+      xOffsetToOrigo: Double,
+      yOffsetToOrigo: Double,
+      xPosition: Double,
+      yPosition: Double,
+      fromX: Double,
+      fromY: Double,
+      toX: Double,
+      toY: Double,
       color: Color
   ): Unit =
-    val startX = fromXInPixels.floor.toInt
-    val startY = fromYInPixels.floor.toInt
-    val endX   = toXInPixels.floor.toInt
-    val endY   = toYInPixels.floor.toInt
+    val xOffset = xOffsetToOrigo + xPosition
+    val yOffset = yOffsetToOrigo + yPosition
 
+    val path = Path2D.Double()
     owner.withGraphics2D: g =>
+      g.translate(xOffset, yOffset)
       g.setColor(color.toAWTColor)
-      g.drawLine(startX, startY, endX, endY)
+      path.moveTo(fromX, fromY)
+      path.lineTo(toX, toY)
+      g.draw(path)
 
   def drawPoint(
-      xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double,
-      xInPixels: Double,
-      yInPixels: Double,
+      xOffsetToOrigo: Double,
+      yOffsetToOrigo: Double,
+      x: Double,
+      y: Double,
       color: Color
   ): Unit =
-    val x = xOffsetToOrigoInPixels.floor.toInt + xInPixels.floor.toInt
-    val y = yOffsetToOrigoInPixels.floor.toInt + yInPixels.floor.toInt
+    val offsetX = xOffsetToOrigo + x
+    val offsetY = yOffsetToOrigo + y
 
     owner.withGraphics2D: g =>
+      g.translate(offsetX, offsetY)
+
       g.setStroke(HairlineStroke)
       g.setColor(color.toAWTColor)
-      g.drawLine(x, y, x, y)
+      g.drawLine(0, 0, 0, 0)
 
   def drawText(text: Text): Unit =
-    val x = text.position.x.floor.toInt
-    val y = text.position.y.floor.toInt + text.boundary.height.inPixels.toInt
+    val x = text.position.x
+    val y = text.position.y + text.boundary.height.inPixels
 
     owner.withGraphics2D: g =>
+      g.translate(x, y)
       g.setColor(text.color.toAWTColor)
       g.setFont(text.font)
-      g.drawString(text.content, x, y)
+      g.drawString(text.content, 0, 0)

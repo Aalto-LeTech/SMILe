@@ -102,17 +102,17 @@ object Renderer:
           point.color
         )
       case polygon: Polygon =>
-        if polygon.pointsRelativeToCenterAtOrigo.isEmpty then return
+        if polygon.points.isEmpty then return
         else
 
           val position = polygon.position
-          val points   = polygon.pointsRelativeToCenterAtOrigo
+          val points   = polygon.points
 
           val (xs, ys) = points.unzip(p => (p.x, p.y))
 
-          val contentUpperLeftCorner = polygon.contentBoundary.upperLeftCorner
-          val contentLeftEdge        = contentUpperLeftCorner.x
-          val contentTopEdge         = contentUpperLeftCorner.y
+//          val contentUpperLeftCorner = polygon.contentBoundary.upperLeftCorner
+//          val contentLeftEdge        = contentUpperLeftCorner.x
+//          val contentTopEdge         = contentUpperLeftCorner.y
 
           targetDrawingSurface.drawPolygon(
             xOffsetToOrigoInPixels,
@@ -122,8 +122,8 @@ object Renderer:
             xs,
             ys,
             points.length,
-            contentLeftEdge,
-            contentTopEdge,
+//            contentLeftEdge,
+//            contentTopEdge,
             polygon.hasBorder,
             polygon.hasFilling,
             polygon.color,

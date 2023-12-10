@@ -1,9 +1,8 @@
 package smile.pictures
 
-import smile.colors.Color
-import smile.modeling.Angle
-import smile.modeling.Pos
 import smile.Settings.*
+import smile.colors.Color
+import smile.modeling.{Angle, Pos}
 
 /** An object-based API for creating regular convex pentagons.
   *
@@ -118,7 +117,7 @@ object Pentagon:
     val points       = pointsFor(circumRadius, Angle.Zero)
     val refY         = 2 * circumRadius - heightInPixels
 
-    Polygon(center, points, Pos(0, -refY), hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
   /** @param circumRadiusInPixels
     * @param center
@@ -141,7 +140,7 @@ object Pentagon:
 
     val points = pointsFor(circumRadiusInPixels, Angle.Zero)
 
-    Polygon(center, points, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
   /** @param circumRadiusInPixels
     *
