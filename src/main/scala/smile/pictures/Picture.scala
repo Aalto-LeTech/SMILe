@@ -19,6 +19,7 @@ class Picture(
 
   def this() = this(Seq(), None)
 
+  override lazy val position: Pos = boundary.center
   lazy val width: Len             = boundary.width
   lazy val height: Len            = boundary.height
 
@@ -26,11 +27,8 @@ class Picture(
     map(_.moveBy(xOffset, yOffset))
 
   override def copy(newPosition: Pos): Picture =
-//    Picture(elements.map(_.moveTo(newPosition.x, newPosition.y, PositionType.Center)), viewport)
+    //    Picture(elements.map(_.moveTo(newPosition.x, newPosition.y, PositionType.Center)), viewport)
     moveTo(newPosition.x, newPosition.y, PositionType.Center) // TODO: check
-
-  override def copy(newMatrix: TransformationMatrix): Picture =
-    Picture(elements.map(_.copy(newMatrix)), viewport)
 
   def copy(newViewport: Option[Viewport]): Picture =
     Picture(elements, newViewport)
@@ -57,20 +55,20 @@ class Picture(
   def mergePixelsWith(another: Picture, pixelMerger: (Color, Color) => Color): Bitmap =
     toBitmap.mergeWith(another.toBitmap, pixelMerger)
 
-  def map(f: PictureElement => PictureElement): Picture =
+  def map(f: (PictureElement) => PictureElement): Picture =
     copy(newElements = elements.map(f))
 
-//  def scaleBy(horizontalFactor: Double, verticalFactor: Double): Picture =
-//    val relativityPoint = this.boundary.center
-//
-//    val scaledPos = this.position.scaleBy(horizontalFactor, verticalFactor, relativityPoint)
-//    val returnToPositionOffset = this.position - scaledPos
-//
-//    map(
-//      _.scaleBy(horizontalFactor, verticalFactor, relativityPoint)
-//        .moveBy(returnToPositionOffset.x, returnToPositionOffset.y)
-//    )
-//  end scaleBy
+  def scaleBy(horizontalFactor: Double, verticalFactor: Double): Picture =
+    val relativityPoint = this.boundary.center
+
+    val scaledPos = this.position.scaleBy(horizontalFactor, verticalFactor, relativityPoint)
+    val returnToPositionOffset = this.position - scaledPos
+
+    map(
+      _.scaleBy(horizontalFactor, verticalFactor, relativityPoint)
+        .moveBy(returnToPositionOffset.x, returnToPositionOffset.y)
+    )
+  end scaleBy
 
   /** Scales this object by given horizontal and vertical factors in relation to a given point.
     *
@@ -79,64 +77,26 @@ class Picture(
     * @param relativityPoint
     * @return
     */
-//  def scaleBy(
-//      horizontalFactor: Double,
-//      verticalFactor: Double,
-//      relativityPoint: Pos
-//  ): Picture =
-//    val scaledPic = scaleBy(horizontalFactor, verticalFactor)
-//
-//    val relativityDistance = scaledPic.position - relativityPoint
-//    val scaledXOffset =
-//      horizontalFactor * relativityDistance.x - relativityDistance.x
-//    val scaledYOffset = verticalFactor * relativityDistance.y - relativityDistance.y
-//
-//    scaledPic.map(_.moveBy(scaledXOffset, scaledYOffset))
-//  end scaleBy
+  def scaleBy(
+      horizontalFactor: Double,
+      verticalFactor: Double,
+      relativityPoint: Pos
+  ): Picture =
+    val scaledPic = scaleBy(horizontalFactor, verticalFactor)
 
-  override def rotateBy(angle: Double, centerOfRotation: Pos): Picture =
-    if elements.length == 1 then
-      val element = elements.head
-      new Picture(Seq(element.rotateBy(angle, centerOfRotation)), viewport)
-    else
-      val pictureCenter = boundary.center
-      new Picture(
-        elements.map(element =>
-          val elementCenter = element.boundary.center
-          val relativeCenterOfRotation = Pos(
-            centerOfRotation.x - pictureCenter.x + elementCenter.x,
-            centerOfRotation.y - pictureCenter.y + elementCenter.y
-          )
-          element.rotateBy(angle, relativeCenterOfRotation)
-        ),
-        viewport
-      )
+    val relativityDistance = scaledPic.position - relativityPoint
+    val scaledXOffset =
+      horizontalFactor * relativityDistance.x - relativityDistance.x
+    val scaledYOffset = verticalFactor * relativityDistance.y - relativityDistance.y
+
+    scaledPic.map(_.moveBy(scaledXOffset, scaledYOffset))
+  end scaleBy
+
+  override inline def rotateBy(angle: Double, centerOfRotation: Pos): Picture =
+    map(_.rotateBy(angle, centerOfRotation))
 
   override inline def rotateByAroundOrigo(angle: Double): Picture =
     map(_.rotateByAroundOrigo(angle))
-
-  override def scaleTo(targetWidth: Double, targetHeight: Double): Picture =
-    map(_.scaleTo(targetWidth, targetHeight)) // TODO: check
-//    val pictureWidth  = boundary.width.inPixels
-//    val pictureHeight = boundary.height.inPixels
-//
-//    val scaledElements = elements.map(element =>
-//      val elementCenter    = element.boundary.center
-//      val horizontalFactor = targetWidth / pictureWidth
-//      val verticalFactor   = targetHeight / pictureHeight
-//
-////      val elementTransformMatrix = new TransformationMatrix()
-////        .scale(horizontalFactor, verticalFactor, elementCenter)
-////
-////      element.copy(elementTransformMatrix)
-//      element.scaleTo(
-//        horizontalFactor,
-//        verticalFactor,
-//        elementCenter
-//      )
-//    )
-//
-//    new Picture(scaledElements, viewport)
 
   def toAsciiArt: String = toBitmap.toAsciiArt()
 
