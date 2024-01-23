@@ -17,7 +17,7 @@ object Pentagon:
   lazy val InternalAngle: Angle = Angle(108)
 
   /** Magnitude of regular convex pentagon's rotational symmetry angle. */
-  lazy val RotationalSymmetryAngle = Angle(72)
+  lazy val RotationalSymmetryAngle: Angle = Angle(72)
 
   /** The ratio of regular convex pentagon's height and side length. */
   lazy val HeightPerSideRatio: Double = Math.sqrt(5.0 + 2.0 * Math.sqrt(5.0)) / 2.0
@@ -64,7 +64,7 @@ object Pentagon:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    apply(widthInPixels, heightInPixels, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    apply(widthInPixels, heightInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   /** @param widthInPixels
     * @param heightInPixels
@@ -115,7 +115,6 @@ object Pentagon:
 
     val circumRadius = limitCircumRadiusTo(widthInPixels, heightInPixels)
     val points       = pointsFor(circumRadius, Angle.Zero)
-    val refY         = 2 * circumRadius - heightInPixels
 
     Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
@@ -125,12 +124,12 @@ object Pentagon:
     * @return
     */
   def apply(
-      circumRadiusInPixels: Double,
-      center: Pos = Pos.Origo,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+             circumRadiusInPixels: Double,
+             center: Pos = Pos.Origin,
+             hasBorder: Boolean = ShapesHaveBordersByDefault,
+             hasFilling: Boolean = ShapesHaveFillingsByDefault,
+             color: Color = DefaultPrimaryColor,
+             fillColor: Color = DefaultSecondaryColor
   ): VectorGraphic =
 
     if circumRadiusInPixels < 0 then
@@ -149,12 +148,12 @@ object Pentagon:
   def pointsFor(circumRadiusInPixels: Double, startAngle: Angle): Seq[Pos] =
 
     val firstPointCandidate = Pos(0, -circumRadiusInPixels)
-    val firstPoint          = firstPointCandidate.rotateByAroundOrigo(startAngle.inDegrees)
+    val firstPoint          = firstPointCandidate.rotateByAroundOrigin(startAngle.inDegrees)
 
     val symmetryAngle  = RotationalSymmetryAngle.inDegrees
     val rotationAngles = Seq.tabulate(5)(n => n * symmetryAngle).tail
 
-    firstPoint +: rotationAngles.map(firstPoint.rotateByAroundOrigo)
+    firstPoint +: rotationAngles.map(firstPoint.rotateByAroundOrigin)
 
   /** @param widthInPixels
     * @param heightInPixels

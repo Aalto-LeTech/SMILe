@@ -29,7 +29,7 @@ object Settings:
   var DefaultPositionType: PositionType                        = PositionType.Center
   var DefaultHorizontalAlignment: HorizontalAlignment          = HorizontalAlignment.Left
   var DefaultVerticalAlignment: VerticalAlignment              = VerticalAlignment.Middle
-  val DefaultPosition: Pos                                     = Pos.Origo
+  val DefaultPosition: Pos                                     = Pos.Origin
   val DefaultRotationAngle: Angle                              = Angle.Zero
   val DefaultRotationAngleInDegrees: Double                    = DefaultRotationAngle.inDegrees
   val IdentityScalingFactor: Double                            = 1.0

@@ -21,7 +21,7 @@ object Rectangle:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    apply(sideLengthInPixels, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    apply(sideLengthInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   def apply(sideLengthInPixels: Double, center: Pos): VectorGraphic =
     apply(
@@ -51,7 +51,7 @@ object Rectangle:
     apply(
       baseLengthInPixels,
       heightInPixels,
-      Pos.Origo,
+      Pos.Origin,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
@@ -66,7 +66,7 @@ object Rectangle:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    apply(baseLengthInPixels, heightInPixels, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    apply(baseLengthInPixels, heightInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   def apply(
       baseLengthInPixels: Double,

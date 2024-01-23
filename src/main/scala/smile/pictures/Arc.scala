@@ -5,51 +5,51 @@ import smile.colors.Color
 import smile.modeling.{Angle, Bounds, Pos, Transformer}
 
 /** An [[Arc]] is a [[VectorGraphic]] that is defined by a position, a width, a height, a start
- * angle, an arc angle,
- * @param pos
- *   center point of the [[Arc]]
- * @param width
- *   width in pixels
- * @param height
- *   height in pixels
- * @param startAngle
- *   start angle in degrees
- * @param arcAngle
- *   arc angle in degrees
- * @param rotationAngle
- *   rotation angle in degrees
- * @param hasBorder
- *   whether this [[Arc]] has a border
- * @param hasFilling
- *   whether this [[Arc]] has a filling
- * @param color
- *   color of the border
- * @param fillColor
- *   color of the filling
- */
+  * angle, an arc angle,
+  * @param pos
+  *   center point of the [[Arc]]
+  * @param width
+  *   width in pixels
+  * @param height
+  *   height in pixels
+  * @param startAngle
+  *   start angle in degrees
+  * @param arcAngle
+  *   arc angle in degrees
+  * @param rotationAngle
+  *   rotation angle in degrees
+  * @param hasBorder
+  *   whether this [[Arc]] has a border
+  * @param hasFilling
+  *   whether this [[Arc]] has a filling
+  * @param color
+  *   color of the border
+  * @param fillColor
+  *   color of the filling
+  */
 class Arc(
-           pos: Pos,
-           val width: Double,
-           val height: Double,
-           val startAngle: Double,
-           val arcAngle: Double,
-           val rotationAngle: Double,
-           val hasBorder: Boolean,
-           val hasFilling: Boolean,
-           val color: Color,
-           val fillColor: Color
-         ) extends VectorGraphic:
+    pos: Pos,
+    val width: Double,
+    val height: Double,
+    val startAngle: Double,
+    val arcAngle: Double,
+    val rotationAngle: Double,
+    val hasBorder: Boolean,
+    val hasFilling: Boolean,
+    val color: Color,
+    val fillColor: Color
+) extends VectorGraphic:
   def this(
-            position: Pos = DefaultPosition,
-            width: Double,
-            height: Double,
-            startAngle: Double = Angle.Zero.inDegrees,
-            arcAngle: Double = Angle.FullAngleInDegrees,
-            hasBorder: Boolean = ShapesHaveBordersByDefault,
-            hasFilling: Boolean = ShapesHaveFillingsByDefault,
-            color: Color = DefaultPrimaryColor,
-            fillColor: Color = DefaultSecondaryColor
-          ) =
+      position: Pos = DefaultPosition,
+      width: Double,
+      height: Double,
+      startAngle: Double = Angle.Zero.inDegrees,
+      arcAngle: Double = Angle.FullAngleInDegrees,
+      hasBorder: Boolean = ShapesHaveBordersByDefault,
+      hasFilling: Boolean = ShapesHaveFillingsByDefault,
+      color: Color = DefaultPrimaryColor,
+      fillColor: Color = DefaultSecondaryColor
+  ) =
     this(
       position,
       width,
@@ -64,7 +64,7 @@ class Arc(
     )
   override lazy val position: Pos = pos
 
-  private[this] lazy val corners: Seq[Pos] =
+  private lazy val corners: Seq[Pos] =
     val halfWidth  = width / 2.0
     val halfHeight = height / 2.0
 
@@ -109,17 +109,17 @@ class Arc(
     )
 
   private def internalCopy(
-                            newPosition: Pos = position,
-                            newWidth: Double = width,
-                            newHeight: Double = height,
-                            newStartAngle: Double = startAngle,
-                            newArcAngle: Double = arcAngle,
-                            newRotationAngle: Double = rotationAngle,
-                            newHasBorder: Boolean = hasBorder,
-                            newHasFilling: Boolean = hasFilling,
-                            newColor: Color = color,
-                            newFillColor: Color = fillColor
-                          ): Arc =
+      newPosition: Pos = position,
+      newWidth: Double = width,
+      newHeight: Double = height,
+      newStartAngle: Double = startAngle,
+      newArcAngle: Double = arcAngle,
+      newRotationAngle: Double = rotationAngle,
+      newHasBorder: Boolean = hasBorder,
+      newHasFilling: Boolean = hasFilling,
+      newColor: Color = color,
+      newFillColor: Color = fillColor
+  ): Arc =
     val limitedArcAngle =
       newArcAngle
         .min(Angle.FullAngleInDegrees)
@@ -142,10 +142,10 @@ class Arc(
     internalCopy(newWidth = horizontalFactor * width, newHeight = verticalFactor * height)
 
   override def scaleBy(
-                        horizontalFactor: Double,
-                        verticalFactor: Double,
-                        relativityPoint: Pos
-                      ): Arc =
+      horizontalFactor: Double,
+      verticalFactor: Double,
+      relativityPoint: Pos
+  ): Arc =
     val scaledPosition =
       Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint)
     internalCopy(
@@ -155,10 +155,10 @@ class Arc(
     )
 
   private def decideNewRotationAngleFor(newRotationAngle: Double): Double =
-  // If this arc represents a circle, rotating it should not have any effect on
-  // its appearance, and thus the rotation angle can (and must) be zero all the
-  // time. (The position can, of course, change if the rotation is not performed
-  // around the arc's center point, but that is irrelevant here.)
+    // If this arc represents a circle, rotating it should not have any effect on
+    // its appearance, and thus the rotation angle can (and must) be zero all the
+    // time. (The position can, of course, change if the rotation is not performed
+    // around the arc's center point, but that is irrelevant here.)
     if isCircle then Angle.Zero.inDegrees
     else rotationAngle + newRotationAngle
 
@@ -168,7 +168,7 @@ class Arc(
       newRotationAngle = decideNewRotationAngleFor(angle)
     )
 
-  override def rotateByAroundOrigo(angle: Double): Arc =
+  override def rotateByAroundOrigin(angle: Double): Arc =
     internalCopy(
       newPosition = Transformer.rotate(position, angle),
       newRotationAngle = decideNewRotationAngleFor(angle)

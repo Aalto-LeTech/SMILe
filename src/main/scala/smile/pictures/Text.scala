@@ -5,17 +5,17 @@ import smile.modeling.{BoundaryCalculator, Bounds, Pos}
 
 import java.awt.Font
 
-sealed trait Alignment
-case object LeftAlign   extends Alignment
-case object RightAlign  extends Alignment
-case object CenterAlign extends Alignment
+sealed trait TextAlignment
+case object LeftAlign   extends TextAlignment
+case object RightAlign  extends TextAlignment
+case object CenterAlign extends TextAlignment
 
 class Text(
     pos: Pos,
     val content: String,
     val font: Font,
     val color: Color,
-    val alignment: Alignment
+    val alignment: TextAlignment
 ) extends VectorGraphic:
 
   override def copy(newPosition: Pos): Text = new Text(
@@ -43,5 +43,5 @@ class Text(
   override def rotateBy(angle: Double, centerOfRotation: Pos): Text =
     this
 
-  override def rotateByAroundOrigo(angleInDegrees: Double): Text =
+  override def rotateByAroundOrigin(angleInDegrees: Double): Text =
     this

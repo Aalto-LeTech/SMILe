@@ -19,5 +19,5 @@ class Point(pos: Pos, val color: Color) extends VectorGraphic:
   override def rotateBy(angle: Double, centerOfRotation: Pos): Point =
     copy(newPosition = position.rotateBy(angle, centerOfRotation))
 
-  override def rotateByAroundOrigo(angle: Double): Point =
-    copy(newPosition = position.rotateByAroundOrigo(angle))
+  override def rotateByAroundOrigin(angle: Double): Point =
+    copy(newPosition = position.rotateByAroundOrigin(angle))

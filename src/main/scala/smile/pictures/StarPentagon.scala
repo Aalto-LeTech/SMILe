@@ -64,7 +64,7 @@ object StarPentagon:
       widthInPixels,
       heightInPixels,
       cuspRadiusInPixels,
-      Pos.Origo,
+      Pos.Origin,
       hasBorder,
       hasFilling,
       color,
@@ -151,13 +151,13 @@ object StarPentagon:
     * @return
     */
   def apply(
-      circumRadiusInPixels: Double = DefaultCircleRadiusInPixels,
-      cuspRadiusInPixels: Double = DefaultStarCuspRadiusInPixels,
-      center: Pos = Pos.Origo,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+             circumRadiusInPixels: Double = DefaultCircleRadiusInPixels,
+             cuspRadiusInPixels: Double = DefaultStarCuspRadiusInPixels,
+             center: Pos = Pos.Origin,
+             hasBorder: Boolean = ShapesHaveBordersByDefault,
+             hasFilling: Boolean = ShapesHaveFillingsByDefault,
+             color: Color = DefaultPrimaryColor,
+             fillColor: Color = DefaultSecondaryColor
   ): VectorGraphic =
 
     if circumRadiusInPixels < 0 then

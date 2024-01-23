@@ -8,10 +8,23 @@ import java.awt.geom.{AffineTransform, Arc2D, Ellipse2D, Path2D}
 import java.awt.image.BufferedImage
 import java.awt.{AlphaComposite, BasicStroke}
 
+/** Extension method for `Double` to truncate its value towards zero.
+  */
 extension (value: Double)
+  /** Truncates the decimal part of a double, moving towards zero.
+    *
+    * @return
+    *   The truncated `Double` value.
+    */
   def truncate: Double =
     if value > 0 then value.floor else value.ceil
 
+/** Represents a drawing surface for rendering shapes, images, and text. It encapsulates a
+  * `BufferAdapter` to provide a high-level drawing API.
+  *
+  * @param owner
+  *   The `BufferAdapter` instance that this `DrawingSurface` operates on.
+  */
 class DrawingSurface(val owner: BufferAdapter):
   /** A ``BasicStroke`` instance to represent as thin line as possible (i.e., width = 1 pixel). */
   private val HairlineStroke = new BasicStroke(1)
@@ -23,6 +36,17 @@ class DrawingSurface(val owner: BufferAdapter):
     */
   private val StaticEllipse = new Ellipse2D.Double()
 
+  /** A static ``Path2D.Double`` instance to minimize creation of new objects during rendering.
+    */
+  private val StaticPath = new Path2D.Double()
+
+  /** Clears the drawing surface using the specified color.
+    *
+    * @param color
+    *   The `Color` to clear with.
+    * @param useSourceColorLiterally
+    *   If true, uses the source color without blending.
+    */
   def clearUsing(color: Color, useSourceColorLiterally: Boolean): Unit =
     owner.withGraphics2D: g =>
       if useSourceColorLiterally then g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC))
@@ -30,13 +54,34 @@ class DrawingSurface(val owner: BufferAdapter):
       g.setColor(color.toAWTColor)
       g.fillRect(0, 0, owner.width, owner.height)
 
+  /** Draws a bitmap image on the surface.
+    *
+    * @param bitmap
+    *   The `BufferedImage` to draw.
+    * @return
+    *   A boolean indicating success.
+    */
   def drawBitmap(bitmap: BufferedImage): Boolean =
     drawBitmap(bitmap, 0.0, 0.0, MaximumOpacity)
 
+  /** Draws a bitmap image with specified position and opacity.
+    *
+    * @param bitmap
+    *   The `BufferedImage` to draw.
+    * @param x
+    *   The x position in pixels.
+    * @param y
+    *   The y position in pixels.
+    * @param opacity
+    *   The opacity for the image.
+    * @return
+    *   A boolean indicating success.
+    */
+
   def drawBitmap(
       bitmap: BufferedImage,
-      xInPixels: Double,
-      yInPixels: Double,
+      x: Double,
+      y: Double,
       opacity: Int
   ): Boolean =
     val normalizedOpacity: Float = opacity.toFloat / MaximumOpacity
@@ -44,16 +89,45 @@ class DrawingSurface(val owner: BufferAdapter):
     owner.withGraphics2D: g =>
       g.setTransform(
         AffineTransform.getTranslateInstance(
-          xInPixels,
-          yInPixels
+          x,
+          y
         )
       )
       g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, normalizedOpacity))
       g.drawImage(bitmap, 0, 0, null)
 
+  /** Draws an arc on the surface.
+    *
+    * @param xOffsetToOrigin
+    *   Offset to the origin.
+    * @param yOffsetToOrigin
+    *   Offset to the origin.
+    * @param xPositionOfCenter
+    *   X position of the center.
+    * @param yPositionOfCenter
+    *   Y position of the center.
+    * @param width
+    *   Width of the arc.
+    * @param height
+    *   Height of the arc.
+    * @param startAngle
+    *   Starting angle.
+    * @param arcAngle
+    *   Arc angle.
+    * @param rotationAngleInDegrees
+    *   Rotation angle in degrees.
+    * @param hasBorder
+    *   Indicates if the arc has a border.
+    * @param hasFilling
+    *   Indicates if the arc is filled.
+    * @param color
+    *   Color of the border.
+    * @param fillColor
+    *   Color of the filling.
+    */
   def drawArc(
-      xOffsetToOrigo: Double,
-      yOffsetToOrigo: Double,
+      xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double,
       xPositionOfCenter: Double,
       yPositionOfCenter: Double,
       width: Double,
@@ -69,11 +143,15 @@ class DrawingSurface(val owner: BufferAdapter):
     val representsCompleteCycle = arcAngle.abs >= 360
 
     val shape =
-      if representsCompleteCycle then new Ellipse2D.Double(0, 0, width, height)
-      else new Arc2D.Double(0, 0, width, height, startAngle, arcAngle, Arc2D.OPEN)
+      if representsCompleteCycle then
+        StaticEllipse.setFrame(0, 0, width, height)
+        StaticEllipse
+      else
+        StaticArc.setArc(0, 0, width, height, startAngle, arcAngle, Arc2D.OPEN)
+        StaticArc
 
-    val offsetX = xOffsetToOrigo + xPositionOfCenter - width / 2
-    val offsetY = yOffsetToOrigo + yPositionOfCenter - height / 2
+    val offsetX = xOffsetToOrigin + xPositionOfCenter - width / 2
+    val offsetY = yOffsetToOrigin + yPositionOfCenter - height / 2
 
     owner.withGraphics2D: g =>
       g.translate(offsetX, offsetY)
@@ -90,50 +168,34 @@ class DrawingSurface(val owner: BufferAdapter):
         g.draw(shape)
   end drawArc
 
-  def drawRoundedRectangle(
-      upperLeftCornerXInPixels: Double,
-      upperLeftCornerYInPixels: Double,
-      widthInPixels: Double,
-      heightInPixels: Double,
-      roundingWidthInPixels: Double,
-      roundingHeightInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
-  ): Unit =
-    val upperLeftX: Int     = upperLeftCornerXInPixels.floor.toInt
-    val upperLeftY: Int     = upperLeftCornerYInPixels.floor.toInt
-    val width: Int          = widthInPixels.floor.toInt
-    val height: Int         = heightInPixels.floor.toInt
-    val roundingWidth: Int  = roundingWidthInPixels.floor.toInt
-    val roundingHeight: Int = roundingHeightInPixels.floor.toInt
-
-    owner.withGraphics2D: g =>
-      if hasFilling then
-        g.setColor(fillColor.toAWTColor)
-        g.fillRoundRect(upperLeftX, upperLeftY, width, height, roundingWidth, roundingHeight)
-
-      if hasBorder then
-        g.setColor(color.toAWTColor)
-        g.drawRoundRect(upperLeftX, upperLeftY, width, height, roundingWidth, roundingHeight)
-
-  def drawPolyline(
-      xCoordinates: Seq[Double],
-      yCoordinates: Seq[Double],
-      numberOfCoordinatesToDraw: Int,
-      color: Color
-  ): Unit =
-    val xs = xCoordinates.map(_.floor.toInt).toArray
-    val ys = yCoordinates.map(_.floor.toInt).toArray
-
-    owner.withGraphics2D: g =>
-      g.setColor(color.toAWTColor)
-      g.drawPolyline(xs, ys, numberOfCoordinatesToDraw)
-
+  /** Draws a polygon on the surface.
+    *
+    * @param xOffsetToOrigin
+    *   Offset to the origin.
+    * @param yOffsetToOrigin
+    *   Offset to the origin.
+    * @param xPosition
+    *   X position.
+    * @param yPosition
+    *   Y position.
+    * @param xCoordinates
+    *   X coordinates of the polygon points.
+    * @param yCoordinates
+    *   Y coordinates of the polygon points.
+    * @param numberOfCoordinatesToDraw
+    *   Number of coordinates to draw.
+    * @param hasBorder
+    *   Indicates if the polygon has a border.
+    * @param hasFilling
+    *   Indicates if the polygon is filled.
+    * @param color
+    *   Color of the border.
+    * @param fillColor
+    *   Color of the filling.
+    */
   def drawPolygon(
-      xOffsetToOrigo: Double,
-      yOffsetToOrigo: Double,
+                   xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double,
       xPosition: Double,
       yPosition: Double,
       xCoordinates: Seq[Double],
@@ -146,21 +208,22 @@ class DrawingSurface(val owner: BufferAdapter):
   ): Unit =
     if numberOfCoordinatesToDraw == 1 then
       drawPoint(
-        xOffsetToOrigo,
-        yOffsetToOrigo,
+        xOffsetToOrigin,
+        yOffsetToOrigin,
         xPosition + xCoordinates.head,
         yPosition + yCoordinates.head,
         color
       )
     else
-      val xOffset = xOffsetToOrigo + xPosition
-      val yOffset = yOffsetToOrigo + yPosition
+      val xOffset = xOffsetToOrigin + xPosition
+      val yOffset = yOffsetToOrigin + yPosition
 
       owner.withGraphics2D: g =>
         g.setStroke(HairlineStroke)
         g.translate(xOffset, yOffset)
 
-        val path = Path2D.Double()
+        val path = StaticPath
+        path.reset()
         for i <- 0 until numberOfCoordinatesToDraw do
           if i == 0 then path.moveTo(xCoordinates(i), yCoordinates(i))
           else path.lineTo(xCoordinates(i), yCoordinates(i))
@@ -169,12 +232,34 @@ class DrawingSurface(val owner: BufferAdapter):
           g.setColor(fillColor.toAWTColor)
           g.fill(path)
 
-        if hasBorder then g.setColor(color.toAWTColor)
-        g.draw(path)
+        if hasBorder then
+          g.setColor(color.toAWTColor)
+          g.draw(path)
 
+  /** Draws a line on the surface.
+    *
+    * @param xOffsetToOrigin
+    *   Offset to the origin.
+    * @param yOffsetToOrigin
+    *   Offset to the origin.
+    * @param xPosition
+    *   X position.
+    * @param yPosition
+    *   Y position.
+    * @param fromX
+    *   Starting X position of the line.
+    * @param fromY
+    *   Starting Y position of the line.
+    * @param toX
+    *   Ending X position of the line.
+    * @param toY
+    *   Ending Y position of the line.
+    * @param color
+    *   Color of the line.
+    */
   def drawLine(
-      xOffsetToOrigo: Double,
-      yOffsetToOrigo: Double,
+      xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double,
       xPosition: Double,
       yPosition: Double,
       fromX: Double,
@@ -183,10 +268,11 @@ class DrawingSurface(val owner: BufferAdapter):
       toY: Double,
       color: Color
   ): Unit =
-    val xOffset = xOffsetToOrigo + xPosition
-    val yOffset = yOffsetToOrigo + yPosition
+    val xOffset = xOffsetToOrigin + xPosition
+    val yOffset = yOffsetToOrigin + yPosition
 
-    val path = Path2D.Double()
+    val path = StaticPath
+    path.reset()
     owner.withGraphics2D: g =>
       g.translate(xOffset, yOffset)
       g.setColor(color.toAWTColor)
@@ -194,15 +280,28 @@ class DrawingSurface(val owner: BufferAdapter):
       path.lineTo(toX, toY)
       g.draw(path)
 
+  /** Draws a point on the surface.
+    *
+    * @param xOffsetToOrigin
+    *   Offset to the origin.
+    * @param yOffsetToOrigin
+    *   Offset to the origin.
+    * @param x
+    *   X position of the point.
+    * @param y
+    *   Y position of the point.
+    * @param color
+    *   Color of the point.
+    */
   def drawPoint(
-      xOffsetToOrigo: Double,
-      yOffsetToOrigo: Double,
+                 xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double,
       x: Double,
       y: Double,
       color: Color
   ): Unit =
-    val offsetX = xOffsetToOrigo + x
-    val offsetY = yOffsetToOrigo + y
+    val offsetX = xOffsetToOrigin + x
+    val offsetY = yOffsetToOrigin + y
 
     owner.withGraphics2D: g =>
       g.translate(offsetX, offsetY)

@@ -2,15 +2,27 @@ package smile.pictures
 
 import smile.infrastructure.Constants.MaximumOpacity
 import smile.infrastructure.{BufferAdapter, DrawingSurface}
-import smile.modeling.{BoundaryCalculator, NullBounds}
+import smile.modeling.BoundaryCalculator
 
-import java.awt.image.BufferedImage
-import scala.annotation.tailrec
-import scala.collection.mutable
-
+/** Provides functionality for rendering pictures and their elements into bitmaps.
+  */
 object Renderer:
+  /** Creates a bitmap representation of a sequence of picture elements.
+    *
+    * @param elements
+    *   A sequence of [[PictureElement]] instances to be rendered into a bitmap.
+    * @return
+    *   A [[Bitmap]] instance representing the rendered picture elements.
+    */
   def createBitmapFrom(elements: PictureElement*): Bitmap = createBitmapFrom(new Picture(elements))
 
+  /** Creates a bitmap from a given picture.
+    *
+    * @param picture
+    *   The [[Picture]] to be rendered into a bitmap.
+    * @return
+    *   A [[Bitmap]] representing the rendered picture.
+    */
   def createBitmapFrom(picture: Picture): Bitmap =
     if picture.elements.isEmpty then return new Bitmap(0, 0)
 
@@ -27,7 +39,7 @@ object Renderer:
 
     val buffer = new BufferAdapter(flooredWidth, flooredHeight)
 
-    val (xOffsetToOrigoInPixels, yOffsetToOrigoInPixels) =
+    val (xOffsetToOrigin, yOffsetToOrigin) =
       val upperLeftCorner = bounds.upperLeftCorner
 
       val xOffset = -upperLeftCorner.x
@@ -38,38 +50,60 @@ object Renderer:
     renderElements(
       picture,
       new DrawingSurface(buffer),
-      xOffsetToOrigoInPixels,
-      yOffsetToOrigoInPixels
+      xOffsetToOrigin,
+      yOffsetToOrigin
     )
 
     new Bitmap(buffer, bounds)
   end createBitmapFrom
 
+  /** Renders the elements of a picture onto a target drawing surface.
+    *
+    * @param content
+    *   The [[Picture]] containing elements to be rendered.
+    * @param targetDrawingSurface
+    *   The [[DrawingSurface]] where elements will be rendered.
+    * @param xOffsetToOrigin
+    *   The X offset to the origin point for rendering.
+    * @param yOffsetToOrigin
+    *   The Y offset to the origin point for rendering.
+    */
   private def renderElements(
       content: Picture,
       targetDrawingSurface: DrawingSurface,
-      xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double
+      xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double
   ): Unit =
     for element <- content.elements.reverse do
       renderElement(
         element,
         targetDrawingSurface,
-        xOffsetToOrigoInPixels,
-        yOffsetToOrigoInPixels
+        xOffsetToOrigin,
+        yOffsetToOrigin
       )
 
+  /** Renders an individual element onto a target drawing surface.
+    *
+    * @param contentItem
+    *   The [[PictureElement]] to be rendered.
+    * @param targetDrawingSurface
+    *   The [[DrawingSurface]] where the element will be rendered.
+    * @param xOffsetToOrigin
+    *   The X offset to the origin point for rendering.
+    * @param yOffsetToOrigin
+    *   The Y offset to the origin point for rendering.
+    */
   private def renderElement(
       contentItem: PictureElement,
       targetDrawingSurface: DrawingSurface,
-      xOffsetToOrigoInPixels: Double,
-      yOffsetToOrigoInPixels: Double
+      xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double
   ): Unit =
     contentItem match
       case arc: Arc =>
         targetDrawingSurface.drawArc(
-          xOffsetToOrigoInPixels,
-          yOffsetToOrigoInPixels,
+          xOffsetToOrigin,
+          yOffsetToOrigin,
           arc.position.x,
           arc.position.y,
           arc.width,
@@ -84,8 +118,8 @@ object Renderer:
         )
       case bitmap: Bitmap =>
         val topLeft  = bitmap.boundary.upperLeftCorner
-        val topLeftX = xOffsetToOrigoInPixels + topLeft.x
-        val topLeftY = yOffsetToOrigoInPixels + topLeft.y
+        val topLeftX = xOffsetToOrigin + topLeft.x
+        val topLeftY = yOffsetToOrigin + topLeft.y
 
         targetDrawingSurface.drawBitmap(
           bitmap.buffer.get,
@@ -95,35 +129,27 @@ object Renderer:
         )
       case point: Point =>
         targetDrawingSurface.drawPoint(
-          xOffsetToOrigoInPixels,
-          yOffsetToOrigoInPixels,
+          xOffsetToOrigin,
+          yOffsetToOrigin,
           point.position.x,
           point.position.y,
           point.color
         )
       case polygon: Polygon =>
-        if polygon.points.isEmpty then return
-        else
-
+        if polygon.points.nonEmpty then
           val position = polygon.position
           val points   = polygon.points
 
           val (xs, ys) = points.unzip(p => (p.x, p.y))
 
-//          val contentUpperLeftCorner = polygon.contentBoundary.upperLeftCorner
-//          val contentLeftEdge        = contentUpperLeftCorner.x
-//          val contentTopEdge         = contentUpperLeftCorner.y
-
           targetDrawingSurface.drawPolygon(
-            xOffsetToOrigoInPixels,
-            yOffsetToOrigoInPixels,
+            xOffsetToOrigin,
+            yOffsetToOrigin,
             position.x,
             position.y,
             xs,
             ys,
             points.length,
-//            contentLeftEdge,
-//            contentTopEdge,
             polygon.hasBorder,
             polygon.hasFilling,
             polygon.color,

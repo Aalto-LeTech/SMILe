@@ -2,6 +2,9 @@ package smile.infrastructure
 
 import scala.collection.immutable.Range.Inclusive
 
+/**
+ * Provides constants for use throughout the library, particularly for dealing with angles and colors.
+ */
 object Constants:
   // DEGREES
 

@@ -65,7 +65,7 @@ class Polygon(
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Polygon =
     internalCopy(
       newPoints = points.map(
-        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+        _.scaleByRelativeToOrigin(horizontalFactor, verticalFactor)
       )
     )
 
@@ -77,7 +77,7 @@ class Polygon(
     internalCopy(
       newPosition = Transformer.scale(position, horizontalFactor, verticalFactor, relativityPoint),
       newPoints = points.map(
-        _.scaleByRelativeToOrigo(horizontalFactor, verticalFactor)
+        _.scaleByRelativeToOrigin(horizontalFactor, verticalFactor)
       )
     )
 
@@ -87,8 +87,8 @@ class Polygon(
       newPoints = points.map(_.rotateBy(angle, centerOfRotation))
     )
 
-  override def rotateByAroundOrigo(angle: Double): Polygon =
+  override def rotateByAroundOrigin(angle: Double): Polygon =
     internalCopy(
       newPosition = Transformer.rotate(position, angle),
-      newPoints = points.map(_.rotateByAroundOrigo(angle))
+      newPoints = points.map(_.rotateByAroundOrigin(angle))
     )

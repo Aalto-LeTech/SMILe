@@ -5,6 +5,8 @@ import smile.infrastructure.MathUtils
 import scala.annotation.targetName
 import scala.collection.Seq
 
+/** Provides constants and utilities for angle measurements and conversions.
+  */
 object Angle:
   /** Number of divisions to a full angle to get a radian. */
   val RadianDivisions: Double = 2.0 * math.Pi
@@ -116,7 +118,7 @@ object Angle:
     FullAngleInGradians / RightAngleDivisions
 
   /** A right angle. */
-  val RightAngle = Angle(RightAngleInDegrees)
+  val RightAngle: Angle = Angle(RightAngleInDegrees)
 
   /** A quadrant (i.e., a right angle). */
   val Quadrant: Angle = RightAngle
@@ -506,10 +508,31 @@ object Angle:
   /** An angle of 2 * Pi radians, i.e., a full angle (360 degrees). */
   lazy val RadTwoPi: Angle = FullAngle
 
+/** Represents an angle with utility methods for trigonometric operations and conversions.
+  *
+  * @constructor
+  *   Creates an angle given in degrees.
+  * @param inDegrees
+  *   The angle in degrees.
+  */
 class Angle(val inDegrees: Double):
-  def this(inRadians: Double, inDegrees: Boolean) =
-    this(if inDegrees then inRadians else inRadians * 180 / math.Pi)
 
+  /** Auxiliary constructor for Angle that allows creation from radians or degrees based on a flag.
+    *
+    * @param inRadiansOrDegrees
+    *   The angle measurement.
+    * @param isDegrees
+    *   Flag indicating if the given measurement is in degrees (`true`) or radians (`false`).
+    */
+
+  def this(inRadiansOrDegrees: Double, isDegrees: Boolean) =
+    this(if isDegrees then inRadiansOrDegrees else inRadiansOrDegrees * 180 / math.Pi)
+
+  /** Converts the angle from degrees to radians.
+    *
+    * @return
+    *   The angle in radians.
+    */
   lazy val inRadians: Double = inDegrees * math.Pi / 180
 
   lazy val sin: Double = MathUtils.sinRads(inRadians)
@@ -518,4 +541,9 @@ class Angle(val inDegrees: Double):
   @targetName("divideAngle")
   inline infix def /(divisor: Double): Angle = Angle(inDegrees / divisor)
 
+  /** Returns a string representation of this angle in degrees.
+    *
+    * @return
+    *   A string representing the angle in degrees followed by the degree symbol.
+    */
   override def toString: String = s"$inDegrees°"

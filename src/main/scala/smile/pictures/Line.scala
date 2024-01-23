@@ -27,7 +27,6 @@ object Line:
 
     val points = Seq(adjustedStart, adjustedEnd)
 
-    // TODO: Change to Polyline after it is implemented
     new Polygon(
       start + (halfWidth, halfHeight),
       points,

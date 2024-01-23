@@ -2,9 +2,11 @@ package smile.modeling
 
 import smile.infrastructure.MathUtils
 
+/** Contains methods for transforming positions, particularly for rotation and scaling operations.
+  */
 object Transformer:
 
-  /** Rotates a [[Pos]] instance around the origo (0,0) by 90 degrees clockwise.
+  /** Rotates a [[Pos]] instance around the origin (0,0) by 90 degrees clockwise.
     *
     * @param position
     *   position to be rotated
@@ -15,7 +17,7 @@ object Transformer:
   final def rotateBy90DegsCW(position: Pos): Pos =
     Pos(-position.y, position.x)
 
-  /** Rotates a sequence of [[Pos]] instances around the origo (0,0) by 90 degrees clockwise.
+  /** Rotates a sequence of [[Pos]] instances around the origin (0,0) by 90 degrees clockwise.
     *
     * @param positions
     *   positions to be rotated
@@ -54,11 +56,10 @@ object Transformer:
     */
   @inline
   final def rotateBy90DegsCW(positions: Seq[Pos], centerOfRotation: Pos): Seq[Pos] =
-    positions map {
+    positions map:
       rotateBy90DegsCW(_, centerOfRotation)
-    }
 
-  /** Rotates a [[Pos]] instance around the origo (0,0) by 90 degrees counterclockwise.
+  /** Rotates a [[Pos]] instance around the origin (0,0) by 90 degrees counterclockwise.
     *
     * @param position
     *   position to be rotated
@@ -69,7 +70,8 @@ object Transformer:
   final def rotateBy90DegsCCW(position: Pos): Pos =
     Pos(position.y, -position.x)
 
-  /** Rotates a sequence of [[Pos]] instances around the origo (0,0) by 90 degrees counterclockwise.
+  /** Rotates a sequence of [[Pos]] instances around the origin (0,0) by 90 degrees
+    * counterclockwise.
     *
     * @param positions
     *   positions to be rotated
@@ -108,11 +110,10 @@ object Transformer:
     */
   @inline
   final def rotateBy90DegsCCW(positions: Seq[Pos], centerOfRotation: Pos): Seq[Pos] =
-    positions map {
+    positions map:
       rotateBy90DegsCCW(_, centerOfRotation)
-    }
 
-  /** Rotates a [[Pos]] instance around the origo (0,0) by 180 degrees.
+  /** Rotates a [[Pos]] instance around the origin (0,0) by 180 degrees.
     *
     * @param position
     *   position to be rotated
@@ -123,7 +124,7 @@ object Transformer:
   final def rotateBy180Degs(position: Pos): Pos =
     Pos(-position.x, -position.y)
 
-  /** Rotates a sequence of [[Pos]] instances around the origo (0,0) by 180 degrees.
+  /** Rotates a sequence of [[Pos]] instances around the origin (0,0) by 180 degrees.
     *
     * @param positions
     *   positions to be rotated
@@ -162,11 +163,10 @@ object Transformer:
     */
   @inline
   final def rotateBy180Degs(positions: Seq[Pos], centerOfRotation: Pos): Seq[Pos] =
-    positions map {
+    positions map:
       rotateBy180Degs(_, centerOfRotation)
-    }
 
-  /** Rotates a [[Pos]] instance around the origo by a given angle.
+  /** Rotates a [[Pos]] instance around the origin by a given angle.
     *
     * @param position
     *   position to be rotated
@@ -183,7 +183,7 @@ object Transformer:
 
     rotate(position, sin, cos)
 
-  /** Rotates a sequence of [[Pos]] instances around the origo by a given angle.
+  /** Rotates a sequence of [[Pos]] instances around the origin by a given angle.
     *
     * @param positions
     *   positions to be rotated
@@ -198,11 +198,10 @@ object Transformer:
     val (sin, cos) =
       MathUtils.sinCosRads(math.toRadians(angleInDegrees))
 
-    positions map {
+    positions map:
       rotate(_, sin, cos)
-    }
 
-  /** Rotates a [[Pos]] instance around the origo by an angle, whose sin and cos are given.
+  /** Rotates a [[Pos]] instance around the origin by an angle, whose sin and cos are given.
     *
     * @param position
     *   position to be rotated
@@ -257,9 +256,8 @@ object Transformer:
     val (sin, cos) =
       MathUtils.sinCosRads(math.toRadians(angleInDegrees))
 
-    positions map {
+    positions map:
       rotate(_, centerOfRotation, sin, cos)
-    }
 
   /** Rotates a [[Pos]] instance around a given point by an angle, whose sin and cos are given.
     *
@@ -309,9 +307,8 @@ object Transformer:
     */
   @inline
   final def scaleHorizontally(positions: Seq[Pos], scalingFactor: Double): Seq[Pos] =
-    positions map {
+    positions map:
       scaleHorizontally(_, scalingFactor)
-    }
 
   /** Scales a [[Pos]] instance's distance from the X axis by a given factor.
     *
@@ -337,11 +334,10 @@ object Transformer:
     */
   @inline
   final def scaleVertically(positions: Seq[Pos], scalingFactor: Double): Seq[Pos] =
-    positions map {
+    positions map:
       scaleVertically(_, scalingFactor)
-    }
 
-  /** Scales a [[Pos]] instance (i.e., its position) in relation to the origo (0,0) by a given
+  /** Scales a [[Pos]] instance (i.e., its position) in relation to the origin (0,0) by a given
     * factor.
     *
     * @param position
@@ -355,7 +351,7 @@ object Transformer:
   final def scale(position: Pos, scalingFactor: Double): Pos =
     scale(position, horizontalScalingFactor = scalingFactor, verticalScalingFactor = scalingFactor)
 
-  /** Scales a sequence of [[Pos]] instances (i.e., their positions) in relation to the origo (0,0)
+  /** Scales a sequence of [[Pos]] instances (i.e., their positions) in relation to the origin (0,0)
     * by a given factor.
     *
     * @param positions
@@ -367,15 +363,14 @@ object Transformer:
     */
   @inline
   final def scale(positions: Seq[Pos], scalingFactor: Double): Seq[Pos] =
-    positions map { p =>
+    positions map: p =>
       scale(
         position = p,
         horizontalScalingFactor = scalingFactor,
         verticalScalingFactor = scalingFactor
       )
-    }
 
-  /** Scales a [[Pos]] instance (i.e., its position) in relation to the origo (0,0) by given
+  /** Scales a [[Pos]] instance (i.e., its position) in relation to the origin (0,0) by given
     * factors.
     *
     * @param position
@@ -395,7 +390,7 @@ object Transformer:
   ): Pos =
     Pos(horizontalScalingFactor * position.x, verticalScalingFactor * position.y)
 
-  /** Scales a sequence of [[Pos]] instances (i.e., their positions) in relation to the origo (0,0)
+  /** Scales a sequence of [[Pos]] instances (i.e., their positions) in relation to the origin (0,0)
     * by given factors.
     *
     * @param positions
@@ -413,9 +408,8 @@ object Transformer:
       horizontalScalingFactor: Double,
       verticalScalingFactor: Double
   ): Seq[Pos] =
-    positions map { p =>
+    positions map: p =>
       scale(position = p, horizontalScalingFactor, verticalScalingFactor)
-    }
 
   /** Scales a [[Pos]] instance's X-wise distance from a given point by a given factor.
     *
@@ -453,9 +447,8 @@ object Transformer:
       scalingFactor: Double,
       relativityPoint: Pos
   ): Seq[Pos] =
-    positions map {
+    positions map:
       scaleHorizontally(_, scalingFactor, relativityPoint)
-    }
 
   /** Scales a [[Pos]] instance's Y-wise distance from a given point by a given factor.
     *
@@ -493,9 +486,8 @@ object Transformer:
       scalingFactor: Double,
       relativityPoint: Pos
   ): Seq[Pos] =
-    positions map {
+    positions map:
       scaleVertically(_, scalingFactor, relativityPoint)
-    }
 
   /** Scales a [[Pos]] instance (i.e., its position) in relation to a given point by a given factor.
     *
@@ -531,14 +523,13 @@ object Transformer:
     */
   @inline
   final def scale(positions: Seq[Pos], scalingFactor: Double, relativityPoint: Pos): Seq[Pos] =
-    positions map { p =>
+    positions map: p =>
       scale(
         position = p,
         horizontalScalingFactor = scalingFactor,
         verticalScalingFactor = scalingFactor,
         relativityPoint = relativityPoint
       )
-    }
 
   /** Scales a [[Pos]] instance (i.e., its position) in relation to a given point by given factors.
     *
@@ -590,11 +581,10 @@ object Transformer:
       verticalScalingFactor: Double,
       relativityPoint: Pos
   ): Seq[Pos] =
-    positions map { p =>
+    positions map: p =>
       scale(
         position = p,
         horizontalScalingFactor,
         verticalScalingFactor,
         relativityPoint = relativityPoint
       )
-    }

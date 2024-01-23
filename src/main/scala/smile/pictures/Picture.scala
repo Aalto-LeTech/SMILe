@@ -3,20 +3,40 @@ package smile.pictures
 import smile.colors.Color
 import smile.modeling.*
 
+/** Represents a picture composed of various graphical elements and an optional viewport.
+  *
+  * @param elements
+  *   A sequence of `PictureElement` instances that make up the picture.
+  * @param viewport
+  *   An optional viewport that defines the visible area of the picture.
+  */
 class Picture(
     val elements: Seq[PictureElement],
     val viewport: Option[Viewport]
 ) extends Transformable[Picture]:
+  /** A map of reference points defined within the picture, keyed by their names. */
   val referencePoints: Map[String, Pos] = elements
     .collect:
       case e: ReferencePoint => e.name -> e.position
     .toMap
 
+  /** Creates a `Picture` with a single graphical element and no predefined viewport.
+    *
+    * @param element
+    *   The `PictureElement` to include in the picture.
+    */
   def this(element: PictureElement) =
     this(Seq(element), None)
 
+  /** Creates a `Picture` with a sequence of graphical elements and no predefined viewport.
+    *
+    * @param elements
+    *   A sequence of `PictureElement` instances to include in the picture.
+    */
   def this(elements: Seq[PictureElement]) = this(elements, None)
 
+  /** Creates an empty `Picture` with no graphical elements and no predefined viewport.
+    */
   def this() = this(Seq(), None)
 
   override lazy val position: Pos = boundary.center
@@ -48,14 +68,27 @@ class Picture(
 
   def removeViewport(): Picture = copy(newViewport = None)
 
-  /** @param another
+  /** Merges the pixels of this picture with another picture using a specified pixel merging
+    * function.
+    *
+    * @param another
+    *   The picture to merge with.
     * @param pixelMerger
+    *   The function to merge pixels of overlapping elements.
     * @return
+    *   A `Bitmap` resulting from the pixel merge.
     */
   def mergePixelsWith(another: Picture, pixelMerger: (Color, Color) => Color): Bitmap =
     toBitmap.mergeWith(another.toBitmap, pixelMerger)
 
-  def map(f: (PictureElement) => PictureElement): Picture =
+  /** Applies a transformation function to each element in the picture.
+    *
+    * @param f
+    *   The transformation function to apply to each `PictureElement`.
+    * @return
+    *   A new `Picture` instance with the transformed elements.
+    */
+  def map(f: PictureElement => PictureElement): Picture =
     copy(newElements = elements.map(f))
 
   def scaleBy(horizontalFactor: Double, verticalFactor: Double): Picture =
@@ -70,13 +103,7 @@ class Picture(
     )
   end scaleBy
 
-  /** Scales this object by given horizontal and vertical factors in relation to a given point.
-    *
-    * @param horizontalFactor
-    * @param verticalFactor
-    * @param relativityPoint
-    * @return
-    */
+
   def scaleBy(
       horizontalFactor: Double,
       verticalFactor: Double,
@@ -95,9 +122,5 @@ class Picture(
   override inline def rotateBy(angle: Double, centerOfRotation: Pos): Picture =
     map(_.rotateBy(angle, centerOfRotation))
 
-  override inline def rotateByAroundOrigo(angle: Double): Picture =
-    map(_.rotateByAroundOrigo(angle))
-
-  def toAsciiArt: String = toBitmap.toAsciiArt()
-
-  def toAsciiColorBlocks: String = toBitmap.toAsciiColorBlocks()
+  override inline def rotateByAroundOrigin(angle: Double): Picture =
+    map(_.rotateByAroundOrigin(angle))

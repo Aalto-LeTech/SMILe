@@ -3,32 +3,73 @@ package smile.infrastructure
 import smile.Settings
 import smile.Settings.{CanvasesAreResizedBasedOnTransformations, DefaultBackgroundColor}
 import smile.colors.Color
-import smile.modeling.{AffineTransformation, Pos}
+import smile.modeling.AffineTransformation
 
 import java.awt.*
 import java.awt.geom.{AffineTransform, Rectangle2D}
 import java.awt.image.{AffineTransformOp, BufferedImage}
 import javax.swing.Icon
 
+/** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
+  * image processing tasks such as copying, scaling, and transforming.
+  *
+  * @param buffer
+  *   The underlying `BufferedImage` instance.
+  */
 class BufferAdapter(private val buffer: BufferedImage):
+
+  /** Creates a `BufferAdapter` instance with specified width and height, initializing a new
+    * `BufferedImage`.
+    *
+    * @param width
+    *   The width of the image.
+    * @param height
+    *   The height of the image.
+    */
   def this(width: Int, height: Int) =
     this(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB))
 
   lazy val width: Int  = buffer.getWidth
   lazy val height: Int = buffer.getHeight
 
-  val ScalingMethod: Int   = Image.SCALE_AREA_AVERAGING
+  /** Scaling method used for image scaling operations. */
+  val ScalingMethod: Int = Image.SCALE_AREA_AVERAGING
+
+  /** Transformation method used for image transformation operations. */
   val TransformMethod: Int = AffineTransformOp.TYPE_BICUBIC
+
+  /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
+    * new one.
+    *
+    * @return
+    *   A new `BufferAdapter` instance that is a copy of the current one.
+    */
 
   def deepCopy: BufferAdapter =
     val newBuffer = new BufferAdapter(width, height)
     newBuffer.withGraphics2D(g => g.drawImage(buffer, 0, 0, null))
     newBuffer
 
+  /** Provides access to the underlying `BufferedImage`.
+    *
+    * @return
+    *   The underlying `BufferedImage`.
+    */
   def get: BufferedImage = buffer
+
+  /** Provides access to the graphics context of the underlying `BufferedImage`.
+    *
+    * @return
+    *   The `Graphics` instance for the underlying `BufferedImage`.
+    */
 
   def graphics: Graphics = buffer.getGraphics
 
+  /** Converts the buffer into a Swing `Icon`.
+    *
+    * @return
+    *   An `Icon` representing the buffer.
+    */
   def toSwingIcon: Icon = new Icon:
     def paintIcon(target: Component, graphics: Graphics, x: Int, y: Int): Unit =
       graphics.drawImage(buffer, x, y, target)
@@ -36,6 +77,15 @@ class BufferAdapter(private val buffer: BufferedImage):
     def getIconHeight: Int = height
   end toSwingIcon
 
+  /** Retrieves the color at a specified pixel location in the buffer.
+    *
+    * @param x
+    *   The x-coordinate of the pixel.
+    * @param y
+    *   The y-coordinate of the pixel.
+    * @return
+    *   The `Color` of the pixel at the specified coordinates.
+    */
   def pixelColor(x: Int, y: Int): Color =
     val rgba = buffer.getRGB(x, y)
     new Color(
@@ -45,7 +95,16 @@ class BufferAdapter(private val buffer: BufferedImage):
       opacity = rgba >> 24 & 0xff
     )
 
-  def scaleTo(targetWidth: Double, targetHeight: Double, newCenter: Pos): BufferAdapter =
+  /** Scales the image to a target width and height.
+    *
+    * @param targetWidth
+    *   The target width for the scaled image.
+    * @param targetHeight
+    *   The target height for the scaled image.
+    * @return
+    *   A new `BufferAdapter` instance containing the scaled image.
+    */
+  def scaleTo(targetWidth: Double, targetHeight: Double): BufferAdapter =
     val newWidth  = targetWidth.toInt.abs
     val newHeight = targetHeight.toInt.abs
 
@@ -71,6 +130,11 @@ class BufferAdapter(private val buffer: BufferedImage):
     newBuffer
   end scaleTo
 
+  /** Sets the colors of the image from a sequence of `Color` objects.
+    *
+    * @param colors
+    *   A sequence of `Color` objects to be applied to the image.
+    */
   def setColorsFromSeq(
       colors: Seq[Color]
   ): Unit =
@@ -98,39 +162,65 @@ class BufferAdapter(private val buffer: BufferedImage):
     buffer.setData(raster)
   end setColorsFromSeq
 
+  /** Copies a portion of the image defined by two corners: top-left and bottom-right.
+    *
+    * @param topLeftX
+    *   X-coordinate of the top-left corner.
+    * @param topLeftY
+    *   Y-coordinate of the top-left corner.
+    * @param bottomRightX
+    *   X-coordinate of the bottom-right corner.
+    * @param bottomRightY
+    *   Y-coordinate of the bottom-right corner.
+    * @return
+    *   A new `BufferAdapter` instance containing the copied portion of the image.
+    */
   def copyPortionXYXY(
-      topLeftXInPixels: Double,
-      topLeftYInPixels: Double,
-      bottomRightXInPixels: Double,
-      bottomRightYInPixels: Double
+      topLeftX: Double,
+      topLeftY: Double,
+      bottomRightX: Double,
+      bottomRightY: Double
   ): BufferAdapter =
     val (x0, x1) =
-      if topLeftXInPixels > bottomRightXInPixels then (bottomRightXInPixels, topLeftXInPixels)
-      else (topLeftXInPixels, bottomRightXInPixels)
+      if topLeftX > bottomRightX then (bottomRightX, topLeftX)
+      else (topLeftX, bottomRightX)
 
     val (y0, y1) =
-      if topLeftYInPixels > bottomRightYInPixels then (bottomRightYInPixels, topLeftYInPixels)
-      else (topLeftYInPixels, bottomRightYInPixels)
+      if topLeftY > bottomRightY then (bottomRightY, topLeftY)
+      else (topLeftY, bottomRightY)
 
     val width  = x1 - x0
     val height = y1 - y0
 
-    copyPortionXYWH(topLeftXInPixels, topLeftYInPixels, width, height)
+    copyPortionXYWH(topLeftX, topLeftY, width, height)
 
+  /** Copies a portion of the image defined by a top-left corner and dimensions.
+    *
+    * @param topLeftX
+    *   X-coordinate of the top-left corner.
+    * @param topLeftY
+    *   Y-coordinate of the top-left corner.
+    * @param width
+    *   Width of the portion to copy.
+    * @param height
+    *   Height of the portion to copy.
+    * @return
+    *   A new `BufferAdapter` instance containing the copied portion of the image.
+    */
   def copyPortionXYWH(
-      topLeftXInPixels: Double,
-      topLeftYInPixels: Double,
-      widthInPixels: Double,
-      heightInPixels: Double
+      topLeftX: Double,
+      topLeftY: Double,
+      width: Double,
+      height: Double
   ): BufferAdapter =
 
-    val flooredWidth: Int  = widthInPixels.floor.toInt
-    val flooredHeight: Int = heightInPixels.floor.toInt
+    val flooredWidth: Int  = width.floor.toInt
+    val flooredHeight: Int = height.floor.toInt
 
     val sourceBufferArea =
       buffer.getSubimage(
-        topLeftXInPixels.floor.toInt,
-        topLeftYInPixels.floor.toInt,
+        topLeftX.floor.toInt,
+        topLeftY.floor.toInt,
         flooredWidth,
         flooredHeight
       )
@@ -218,12 +308,34 @@ class BufferAdapter(private val buffer: BufferedImage):
     )
   end setDefaultGraphics2DProperties
 
+  /** Iterates over all pixel locations in the buffer, invoking a callback function for each pixel
+    * coordinate.
+    *
+    * @param callback
+    *   A function that takes two integers (x and y coordinates) and returns Unit. It is called for
+    *   each pixel.
+    */
   def iterateLocations(callback: (Int, Int) => Unit): Unit =
     for
       x <- 0 until width
       y <- 0 until height
     do callback(x, y)
 
+  /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
+    * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
+    * resized based on the transformation.
+    *
+    * @param transformation
+    *   The `AffineTransformation` to apply to the image.
+    * @param resizeCanvasBasedOnTransformation
+    *   A boolean indicating whether the canvas should be resized based on the transformation.
+    *   Defaults to the value of `CanvasesAreResizedBasedOnTransformations` from `Settings`.
+    * @param backgroundColor
+    *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
+    *   `DefaultBackgroundColor`.
+    * @return
+    *   A new `BufferAdapter` instance containing the transformed image.
+    */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
       resizeCanvasBasedOnTransformation: Boolean = CanvasesAreResizedBasedOnTransformations,
@@ -260,25 +372,15 @@ class BufferAdapter(private val buffer: BufferedImage):
         val translationToBringTheRotatedBitmapFullyVisible =
           AffineTransform.getTranslateInstance(offsetLeft, offsetTop)
 
-        lowLevelTransformation preConcatenate translationToBringTheRotatedBitmapFullyVisible
+        lowLevelTransformation.preConcatenate(translationToBringTheRotatedBitmapFullyVisible)
 
     val finalTransformOperation =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
     val resultingBuffer = BufferAdapter(resultingImageWidth, resultingImageHeight)
 
-    new DrawingSurface(resultingBuffer) clearUsing (backgroundColor, true)
+    new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
 
     finalTransformOperation.filter(buffer, resultingBuffer.get)
 
     resultingBuffer
   end createTransformedVersionWith
-
-  def scaleToHeight(newHeight: Int): BufferAdapter =
-    val scale         = newHeight.toDouble / height
-    val newWidth      = (width * scale).toInt * 3
-    val scaledImage   = new BufferAdapter(newWidth, newHeight)
-    val scaleInstance = AffineTransform.getScaleInstance(scale * 3, scale)
-    val scaleOp       = new AffineTransformOp(scaleInstance, AffineTransformOp.TYPE_BICUBIC)
-    scaleOp.filter(buffer, scaledImage.buffer)
-    scaledImage
-  end scaleToHeight

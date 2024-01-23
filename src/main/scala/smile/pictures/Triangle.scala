@@ -33,7 +33,7 @@ object Triangle:
   def apply(sideLength: Double): VectorGraphic =
     apply(
       sideLength,
-      Pos.Origo,
+      Pos.Origin,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
@@ -57,7 +57,7 @@ object Triangle:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    apply(sideLength, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    apply(sideLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   /** Creates a new equilateral triangle that has a specific center point.
     *
@@ -137,7 +137,7 @@ object Triangle:
       color: Color = DefaultPrimaryColor,
       fillColor: Color = DefaultSecondaryColor
   ): VectorGraphic =
-    basedOnHeight(height, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    basedOnHeight(height, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   /** Creates a new equilateral triangle that has a specific center point.
     *
@@ -180,7 +180,7 @@ object Triangle:
     apply(
       sideLength,
       baseLength,
-      Pos.Origo,
+      Pos.Origin,
       hasBorder = ShapesHaveBordersByDefault,
       hasFilling = ShapesHaveFillingsByDefault,
       color = DefaultPrimaryColor,
@@ -206,7 +206,7 @@ object Triangle:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    apply(sideLength, baseLength, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    apply(sideLength, baseLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   /** Creates a new isosceles triangle that has a specific center point.
     *
@@ -295,7 +295,7 @@ object Triangle:
       color: Color,
       fillColor: Color
   ): VectorGraphic =
-    basedOnHeightAndBase(height, baseLength, Pos.Origo, hasBorder, hasFilling, color, fillColor)
+    basedOnHeightAndBase(height, baseLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
 
   /** Creates a new isosceles triangle that has a specific center point.
     *
@@ -400,7 +400,7 @@ object Triangle:
       baseLength,
       leftSideLength,
       rightSideLength,
-      Pos.Origo,
+      Pos.Origin,
       hasBorder,
       hasFilling,
       color,
@@ -468,7 +468,7 @@ object Triangle:
       )
 
     val prelimTop =
-      Pos(leftSideLength, 0).rotateByAroundOrigo(leftAngle)
+      Pos(leftSideLength, 0).rotateByAroundOrigin(leftAngle)
 
     val xOffset =
       if leftAngle <= Angle.RightAngleInDegrees then
@@ -517,7 +517,6 @@ object Triangle:
     val points: Seq[Pos] =
       Seq(firstCornerRelativeToCenter, secondCornerRelativeToCenter, thirdCornerRelativeToCenter)
 
-    // TODO: When no filling, create a Polyline, after it is implemented
     Polygon(center, points, hasBorder, hasFilling, color, fillColor)
 
   /** Test if the triangle inequality holds for the given side lengths.

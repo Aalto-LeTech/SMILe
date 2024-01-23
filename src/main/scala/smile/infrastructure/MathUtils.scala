@@ -2,7 +2,10 @@ package smile.infrastructure
 
 import scala.annotation.tailrec
 
+/** Provides utility mathematical functions for operations commonly used throughout the library.
+  */
 object MathUtils:
+
   /** Divides a length into a number of positions.
     *
     * @param lengthToDivide
@@ -33,6 +36,15 @@ object MathUtils:
 
     divideLengthRec(0, numberOfDivisions, lengthToDivide, Seq[Double]())
 
+  /** Sorts two numbers in ascending order.
+    *
+    * @param a
+    *   The first number.
+    * @param b
+    *   The second number.
+    * @return
+    *   A tuple with the smaller number first and the larger number second.
+    */
   def sort(a: Double, b: Double): (Double, Double) =
     if a < b then (a, b) else (b, a)
 
