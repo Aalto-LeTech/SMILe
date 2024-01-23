@@ -1,12 +1,12 @@
 package smile.infrastructure
 
-import smile.colors.Color
+import smile.colors.{Color, PresetColor}
 import smile.infrastructure.Constants.MaximumOpacity
-import smile.pictures.Text
+import smile.pictures.{FillStyle, StrokeStyle, Text}
 
 import java.awt.geom.{AffineTransform, Arc2D, Ellipse2D, Path2D}
 import java.awt.image.BufferedImage
-import java.awt.{AlphaComposite, BasicStroke}
+import java.awt.{AlphaComposite, BasicStroke, Graphics2D, Shape}
 
 /** Extension method for `Double` to truncate its value towards zero.
   */
@@ -26,6 +26,7 @@ extension (value: Double)
   *   The `BufferAdapter` instance that this `DrawingSurface` operates on.
   */
 class DrawingSurface(val owner: BufferAdapter):
+
   /** A ``BasicStroke`` instance to represent as thin line as possible (i.e., width = 1 pixel). */
   private val HairlineStroke = new BasicStroke(1)
 
@@ -77,7 +78,6 @@ class DrawingSurface(val owner: BufferAdapter):
     * @return
     *   A boolean indicating success.
     */
-
   def drawBitmap(
       bitmap: BufferedImage,
       x: Double,
@@ -116,14 +116,10 @@ class DrawingSurface(val owner: BufferAdapter):
     *   Arc angle.
     * @param rotationAngleInDegrees
     *   Rotation angle in degrees.
-    * @param hasBorder
-    *   Indicates if the arc has a border.
-    * @param hasFilling
-    *   Indicates if the arc is filled.
-    * @param color
-    *   Color of the border.
-    * @param fillColor
-    *   Color of the filling.
+    * @param fillStyle
+    *   Optional fill style for the arc.
+    * @param strokeStyle
+    *   Optional stroke style for the arc.
     */
   def drawArc(
       xOffsetToOrigin: Double,
@@ -135,10 +131,8 @@ class DrawingSurface(val owner: BufferAdapter):
       startAngle: Double,
       arcAngle: Double,
       rotationAngleInDegrees: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): Unit =
     val representsCompleteCycle = arcAngle.abs >= 360
 
@@ -157,15 +151,7 @@ class DrawingSurface(val owner: BufferAdapter):
       g.translate(offsetX, offsetY)
       g.rotate(rotationAngleInDegrees.toRadians)
 
-      g.setStroke(HairlineStroke)
-
-      if hasFilling then
-        g.setColor(fillColor.toAWTColor)
-        g.fill(shape)
-
-      if hasBorder then
-        g.setColor(color.toAWTColor)
-        g.draw(shape)
+      draw(g, fillStyle, strokeStyle, shape)
   end drawArc
 
   /** Draws a polygon on the surface.
@@ -184,27 +170,21 @@ class DrawingSurface(val owner: BufferAdapter):
     *   Y coordinates of the polygon points.
     * @param numberOfCoordinatesToDraw
     *   Number of coordinates to draw.
-    * @param hasBorder
-    *   Indicates if the polygon has a border.
-    * @param hasFilling
-    *   Indicates if the polygon is filled.
-    * @param color
-    *   Color of the border.
-    * @param fillColor
-    *   Color of the filling.
+    * @param fillStyle
+    *   Optional fill style for the polygon.
+    * @param strokeStyle
+    *   Optional stroke style for the polygon.
     */
   def drawPolygon(
-                   xOffsetToOrigin: Double,
+      xOffsetToOrigin: Double,
       yOffsetToOrigin: Double,
       xPosition: Double,
       yPosition: Double,
       xCoordinates: Seq[Double],
       yCoordinates: Seq[Double],
       numberOfCoordinatesToDraw: Int,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): Unit =
     if numberOfCoordinatesToDraw == 1 then
       drawPoint(
@@ -212,14 +192,13 @@ class DrawingSurface(val owner: BufferAdapter):
         yOffsetToOrigin,
         xPosition + xCoordinates.head,
         yPosition + yCoordinates.head,
-        color
+        fillStyle.map(_.color).getOrElse(PresetColor.Transparent)
       )
     else
       val xOffset = xOffsetToOrigin + xPosition
       val yOffset = yOffsetToOrigin + yPosition
 
       owner.withGraphics2D: g =>
-        g.setStroke(HairlineStroke)
         g.translate(xOffset, yOffset)
 
         val path = StaticPath
@@ -227,58 +206,9 @@ class DrawingSurface(val owner: BufferAdapter):
         for i <- 0 until numberOfCoordinatesToDraw do
           if i == 0 then path.moveTo(xCoordinates(i), yCoordinates(i))
           else path.lineTo(xCoordinates(i), yCoordinates(i))
+        path.lineTo(xCoordinates.head, yCoordinates.head)
 
-        if hasFilling then
-          g.setColor(fillColor.toAWTColor)
-          g.fill(path)
-
-        if hasBorder then
-          g.setColor(color.toAWTColor)
-          g.draw(path)
-
-  /** Draws a line on the surface.
-    *
-    * @param xOffsetToOrigin
-    *   Offset to the origin.
-    * @param yOffsetToOrigin
-    *   Offset to the origin.
-    * @param xPosition
-    *   X position.
-    * @param yPosition
-    *   Y position.
-    * @param fromX
-    *   Starting X position of the line.
-    * @param fromY
-    *   Starting Y position of the line.
-    * @param toX
-    *   Ending X position of the line.
-    * @param toY
-    *   Ending Y position of the line.
-    * @param color
-    *   Color of the line.
-    */
-  def drawLine(
-      xOffsetToOrigin: Double,
-      yOffsetToOrigin: Double,
-      xPosition: Double,
-      yPosition: Double,
-      fromX: Double,
-      fromY: Double,
-      toX: Double,
-      toY: Double,
-      color: Color
-  ): Unit =
-    val xOffset = xOffsetToOrigin + xPosition
-    val yOffset = yOffsetToOrigin + yPosition
-
-    val path = StaticPath
-    path.reset()
-    owner.withGraphics2D: g =>
-      g.translate(xOffset, yOffset)
-      g.setColor(color.toAWTColor)
-      path.moveTo(fromX, fromY)
-      path.lineTo(toX, toY)
-      g.draw(path)
+        draw(g, fillStyle, strokeStyle, path)
 
   /** Draws a point on the surface.
     *
@@ -294,7 +224,7 @@ class DrawingSurface(val owner: BufferAdapter):
     *   Color of the point.
     */
   def drawPoint(
-                 xOffsetToOrigin: Double,
+      xOffsetToOrigin: Double,
       yOffsetToOrigin: Double,
       x: Double,
       y: Double,
@@ -319,3 +249,22 @@ class DrawingSurface(val owner: BufferAdapter):
       g.setColor(text.color.toAWTColor)
       g.setFont(text.font)
       g.drawString(text.content, 0, 0)
+
+  private def draw(
+      g: Graphics2D,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle],
+      shape: Shape
+  ): Unit =
+    fillStyle match
+      case Some(style) =>
+        g.setColor(style.color.toAWTColor)
+        g.fill(shape)
+      case None =>
+
+    strokeStyle match
+      case Some(style) =>
+        g.setStroke(style.toAWTStroke)
+        g.setColor(style.color.toAWTColor)
+        g.draw(shape)
+      case None =>

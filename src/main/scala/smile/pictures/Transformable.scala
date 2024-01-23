@@ -6,6 +6,7 @@ import smile.modeling.*
 import scala.annotation.tailrec
 
 object Transformable:
+
   /** A type alias for a function that transforms a picture into another picture. */
   type SimpleTransformer = Picture => Picture
 
@@ -18,6 +19,7 @@ object Transformable:
   *   The type of the transformable object.
   */
 trait Transformable[TransformableType <: Transformable[TransformableType]]:
+
   /** The bounding box of the transformable object. */
   lazy val boundary: Bounds
 
@@ -566,7 +568,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     * @param numberOfReplicas
     *   The total number of replicas to be created and placed. This number includes the original
     *   object in the count.
-    * @param paddingInPixels
+    * @param padding
     *   The space in pixels between each replica. This padding is applied uniformly between replicas
     *   to maintain consistent spacing.
     * @param alignment
@@ -584,7 +586,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
   def replicateTo(
       side: Side,
       numberOfReplicas: Int,
-      paddingInPixels: Double = DefaultPaddingInPixels,
+      padding: Double = DefaultPaddingInPixels,
       alignment: SideIndependentAlignment,
       transformer: Transformable.SimpleTransformer = Transformable.IdentitySimpleTransformer
   ): Picture =
@@ -604,7 +606,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       replicate(
         replicasLeft - 1,
         transformed,
-        resultPicture.addTo(side, transformed, paddingInPixels, alignment)
+        resultPicture.addTo(side, transformed, padding, alignment)
       )
     end replicate
 
@@ -715,11 +717,14 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     scaleTo(targetWidth, targetHeight, position)
 
   /** Scales this object to given width and height in relation to a given point.
-    *
     * @param targetWidth
+    *   The target width in pixels.
     * @param targetHeight
+    *   The target height in pixels.
     * @param relativityPoint
+    *   The point relative to which the scaling is applied.
     * @return
+    *   A new instance of the transformable object scaled to the specified dimensions.
     */
   def scaleTo(targetWidth: Double, targetHeight: Double, relativityPoint: Pos): TransformableType =
     val horizontalFactor = targetWidth / boundary.width.inPixels
@@ -735,21 +740,27 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
   //  // -------------------------------------------------------------------------------------------- \\
   //
 
-  /** Scales this object in relation to its center by using a given factor for both horizontal and
-    * vertical directions.
+  /** Scales the transformable object uniformly in both horizontal and vertical directions relative
+    * to its center.
     *
     * @param factor
+    *   The scaling factor to apply uniformly to both dimensions.
     * @return
+    *   A new instance of the transformable object scaled by the specified factor.
     */
   def scaleBy(factor: Double): TransformableType =
     scaleBy(factor, factor)
 
-  /** Scales this object in relation to a given point by using a given factor for both horizontal
-    * and vertical directions.
+  /** Scales the transformable object uniformly in both horizontal and vertical directions relative
+    * to a specified point.
     *
     * @param factor
+    *   The scaling factor to apply uniformly to both dimensions.
     * @param relativityPoint
+    *   The point relative to which the scaling is applied.
     * @return
+    *   A new instance of the transformable object scaled by the specified factor around the given
+    *   point.
     */
   def scaleBy(factor: Double, relativityPoint: Pos): TransformableType =
     scaleBy(factor, factor, relativityPoint)
@@ -814,23 +825,23 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
     *
     * @param upperLeftCorner
     *   The upper left corner of the crop area.
-    * @param widthInPixels
+    * @param width
     *   The width of the crop area in pixels.
-    * @param heightInPixels
+    * @param height
     *   The height of the crop area in pixels.
     * @return
     *   A Bitmap representing the cropped area of the transformable object.
     */
   inline final def crop(
       upperLeftCorner: Pos,
-      widthInPixels: Double,
-      heightInPixels: Double
+      width: Double,
+      height: Double
   ): Bitmap =
     crop(
       upperLeftCorner.x,
       upperLeftCorner.y,
-      upperLeftCorner.x + widthInPixels,
-      upperLeftCorner.y + heightInPixels
+      upperLeftCorner.x + width,
+      upperLeftCorner.y + height
     )
 
   /** Crops this object to a specified area defined by upper left and lower right coordinates.

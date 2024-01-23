@@ -1,48 +1,54 @@
 package smile.pictures
 
-import smile.colors.Color
 import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
+/** Represents a polygon defined by a sequence of points, with optional fill and stroke styles.
+  *
+  * @param pos
+  *   The position of the polygon. This usually represents the centroid or a specific anchor point.
+  * @param points
+  *   The sequence of points defining the vertices of the polygon.
+  * @param fillStyle
+  *   Optional fill style for the interior of the polygon.
+  * @param strokeStyle
+  *   Optional stroke style for the outline of the polygon.
+  */
 class Polygon(
     pos: Pos,
     val points: Seq[Pos],
-    val hasBorder: Boolean,
-    val hasFilling: Boolean,
-    val color: Color,
-    val fillColor: Color
+    override val fillStyle: Option[FillStyle],
+    override val strokeStyle: Option[StrokeStyle]
 ) extends VectorGraphic:
 
   override def copy(newPosition: Pos): PictureElement = new Polygon(
     newPosition,
     points,
-    hasBorder,
-    hasFilling,
-    color,
-    fillColor
+    fillStyle,
+    strokeStyle
   )
 
   private def internalCopy(
       newPosition: Pos = position,
       newPoints: Seq[Pos] = points,
-      newHasBorder: Boolean = hasBorder,
-      newHasFilling: Boolean = hasFilling,
-      newColor: Color = color,
-      newFillColor: Color = fillColor
+      newFillStyle: Option[FillStyle] = fillStyle,
+      newStrokeStyle: Option[StrokeStyle] = strokeStyle
   ): Polygon =
     new Polygon(
       newPosition,
       newPoints,
-      newHasBorder,
-      newHasFilling,
-      newColor,
-      newFillColor
+      newFillStyle,
+      newStrokeStyle
     )
 
   override lazy val position: Pos = pos
 
-  val contentBoundary: Bounds =
+  /** Computes the boundary of the polygon based on its points.
+    */
+  private val contentBoundary: Bounds =
     BoundaryCalculator.fromPositions(points)
 
+  /** Determines the corners of the polygon's bounding box.
+    */
   lazy val corners: Seq[Pos] =
     val ulX = contentBoundary.upperLeftCorner.x
     val ulY = contentBoundary.upperLeftCorner.y

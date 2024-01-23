@@ -3,12 +3,22 @@ package smile.pictures
 import smile.colors.Color
 import smile.modeling.{Bounds, Pos}
 
+/** Represents a graphical point with a specified position and color.
+  *
+  * @param pos
+  *   The position of the point.
+  * @param color
+  *   The color of the point.
+  */
 class Point(pos: Pos, val color: Color) extends VectorGraphic:
+
   override lazy val boundary: Bounds = Bounds(pos, pos)
+
   override def copy(newPosition: Pos): Point =
     new Point(newPosition, color)
 
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): PictureElement = this
+
   override def scaleBy(
       horizontalFactor: Double,
       verticalFactor: Double,

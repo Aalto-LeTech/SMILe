@@ -14,6 +14,7 @@ class Picture(
     val elements: Seq[PictureElement],
     val viewport: Option[Viewport]
 ) extends Transformable[Picture]:
+
   /** A map of reference points defined within the picture, keyed by their names. */
   val referencePoints: Map[String, Pos] = elements
     .collect:
@@ -58,7 +59,7 @@ class Picture(
 
   lazy val hasViewport: Boolean = viewport.isDefined
 
-  lazy val boundary: Bounds = BoundaryCalculator.fromBoundaries(elements)
+  override lazy val boundary: Bounds = BoundaryCalculator.fromBoundaries(elements)
 
   def setViewport(viewport: Viewport): Picture =
     copy(newViewport = Option(viewport))
@@ -91,7 +92,7 @@ class Picture(
   def map(f: PictureElement => PictureElement): Picture =
     copy(newElements = elements.map(f))
 
-  def scaleBy(horizontalFactor: Double, verticalFactor: Double): Picture =
+  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Picture =
     val relativityPoint = this.boundary.center
 
     val scaledPos = this.position.scaleBy(horizontalFactor, verticalFactor, relativityPoint)
@@ -103,8 +104,7 @@ class Picture(
     )
   end scaleBy
 
-
-  def scaleBy(
+  override def scaleBy(
       horizontalFactor: Double,
       verticalFactor: Double,
       relativityPoint: Pos

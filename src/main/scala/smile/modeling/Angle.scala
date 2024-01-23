@@ -487,7 +487,7 @@ object Angle:
   /** An angle of 7/4 * Pi radians, i.e., 315 degrees. */
   lazy val RadSevenFourthsPi: Angle = Deg315
 
-  /** An angle of 320 xdegrees. */
+  /** An angle of 320 degrees. */
   lazy val Deg320: Angle = Angle(320.0)
 
   /** An angle of 330 degrees. */

@@ -1,21 +1,14 @@
 package smile.pictures
 
-import smile.Settings.*
-import smile.colors.Color
 import smile.infrastructure.MathUtils
 import smile.modeling.{Angle, Pos}
 
-/** An object-based API for creating triangles.
+/** Factory object for creating triangles.
   *
-  * @author
-  *   Aleksi Lukkarinen
-  * @author
-  *   Jaakko Nakaza
+  * Provides methods to create equilateral, isosceles, and scalene triangles based on side lengths,
+  * height, base length, or specific corner positions.
   */
 object Triangle:
-
-  /** The number of corners (i.e., three) in a triangle. */
-  val NumberOfCornersInTriangle: Int = 3
 
   /** Height of an equilateral triangle as a factor of the length of its side. */
   val HeightOfEquilateralTriangleAsFactorOfSide: Double = math.sqrt(3) / 2.0
@@ -24,78 +17,47 @@ object Triangle:
   val SideOfEquilateralTriangleAsFactorOfHeight: Double =
     1.0 / HeightOfEquilateralTriangleAsFactorOfSide
 
-  /** Creates a new equilateral triangle.
+  /** Creates an equilateral triangle with a specified side length.
     *
     * @param sideLength
-    *
+    *   Length of each side of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def apply(sideLength: Double): VectorGraphic =
-    apply(
-      sideLength,
-      Pos.Origin,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new equilateral triangle.
-    *
-    * @param sideLength
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing an equilateral triangle.
+    * @throws IllegalArgumentException
+    *   if the side length is negative.
     */
   def apply(
       sideLength: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(sideLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    apply(sideLength, Pos.Origin, fillStyle, strokeStyle)
 
-  /** Creates a new equilateral triangle that has a specific center point.
+  /** Creates an equilateral triangle with a specified side length.
     *
     * @param sideLength
+    *   Length of each side of the triangle.
     * @param center
-    *
+    *   Center of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def apply(sideLength: Double, center: Pos): VectorGraphic =
-    apply(
-      sideLength,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new equilateral triangle that has a specific center point.
-    *
-    * @param sideLength
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing an equilateral triangle.
+    * @throws IllegalArgumentException
+    *   if the side length is negative.
     */
   def apply(
       sideLength: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-
     validateSide(sideLength, "side")
 
     val halfHeight: Double =
@@ -103,60 +65,48 @@ object Triangle:
 
     val halfBase: Double = sideLength / 2.0
 
-    createIsosceles(halfHeight, halfBase, center, hasBorder, hasFilling, color, fillColor)
+    createIsosceles(halfHeight, halfBase, center, fillStyle, strokeStyle)
 
-  /** Creates a new equilateral triangle.
+  /** Creates an equilateral triangle based on the specified height.
     *
     * @param height
-    *
+    *   Height of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def basedOnHeight(height: Double): VectorGraphic =
-    basedOnHeight(
-      height,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new equilateral triangle.
-    *
-    * @param height
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing an equilateral triangle.
+    * @throws IllegalArgumentException
+    *   if the height is negative.
     */
   def basedOnHeight(
       height: Double,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    basedOnHeight(height, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    basedOnHeight(height, Pos.Origin, fillStyle, strokeStyle)
 
-  /** Creates a new equilateral triangle that has a specific center point.
+  /** Creates an equilateral triangle based on the specified height.
     *
     * @param height
+    *   Height of the triangle.
     * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
+    *   Center of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
+    *   A `VectorGraphic` representing an equilateral triangle.
+    * @throws IllegalArgumentException
+    *   if the height is negative.
     */
   def basedOnHeight(
       height: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
     if height < 0 then
@@ -167,86 +117,54 @@ object Triangle:
 
     val halfHeight: Double = height / 2.0
 
-    createIsosceles(halfHeight, halfSide, center, hasBorder, hasFilling, color, fillColor)
+    createIsosceles(halfHeight, halfSide, center, fillStyle, strokeStyle)
 
-  /** Creates a new isosceles triangle.
+  /** Creates an isosceles triangle with specified side lengths and base length.
     *
     * @param sideLength
+    *   Length of the two equal sides of the triangle.
     * @param baseLength
-    *
+    *   Length of the base of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def apply(sideLength: Double, baseLength: Double): VectorGraphic =
-    apply(
-      sideLength,
-      baseLength,
-      Pos.Origin,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new isosceles triangle.
-    *
-    * @param sideLength
-    * @param baseLength
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing an isosceles triangle.
+    * @throws IllegalArgumentException
+    *   if any of the lengths are negative or if the triangle inequality does not hold.
     */
   def apply(
       sideLength: Double,
       baseLength: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(sideLength, baseLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    apply(sideLength, baseLength, Pos.Origin, fillStyle, strokeStyle)
 
-  /** Creates a new isosceles triangle that has a specific center point.
+  /** Creates an isosceles triangle with specified side lengths and base length.
     *
     * @param sideLength
+    *   Length of the two equal sides of the triangle.
     * @param baseLength
+    *   Length of the base of the triangle.
     * @param center
-    *
+    *   Center of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def apply(sideLength: Double, baseLength: Double, center: Pos): VectorGraphic =
-    apply(
-      sideLength,
-      baseLength,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new isosceles triangle that has a specific center point.
-    *
-    * @param sideLength
-    * @param baseLength
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing an isosceles triangle.
+    * @throws IllegalArgumentException
+    *   if any of the lengths are negative or if the triangle inequality does not hold.
     */
   def apply(
       sideLength: Double,
       baseLength: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
     validateSide(baseLength, "base")
@@ -257,66 +175,61 @@ object Triangle:
 
     val halfBase: Double = baseLength / 2.0
 
-    createIsosceles(halfHeight, halfBase, center, hasBorder, hasFilling, color, fillColor)
+    createIsosceles(halfHeight, halfBase, center, fillStyle, strokeStyle)
 
-  /** Creates a new isosceles triangle.
+  /** Creates a new isosceles triangle based on specified height and base length.
     *
     * @param height
+    *   The height of the triangle. Must be non-negative.
     * @param baseLength
-    *
+    *   The length of the base of the triangle. Must be non-negative.
+    * @param fillStyle
+    *   Optional fill style for the triangle. None means no fill.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle. None means no stroke.
     * @return
-    */
-  def basedOnHeightAndBase(height: Double, baseLength: Double): VectorGraphic =
-    basedOnHeightAndBase(
-      height,
-      baseLength,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new isosceles triangle.
-    *
-    * @param height
-    * @param baseLength
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing the isosceles triangle.
+    * @throws IllegalArgumentException
+    *   If either `height` or `baseLength` is negative.
     */
   def basedOnHeightAndBase(
       height: Double,
       baseLength: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    basedOnHeightAndBase(height, baseLength, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    basedOnHeightAndBase(
+      height,
+      baseLength,
+      Pos.Origin,
+      fillStyle,
+      strokeStyle
+    )
 
-  /** Creates a new isosceles triangle that has a specific center point.
+  /** Creates a new isosceles triangle that has a specific center point, based on specified height
+    * and base length.
     *
     * @param height
+    *   The height of the triangle. Must be non-negative.
     * @param baseLength
+    *   The length of the base of the triangle. Must be non-negative.
     * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
+    *   The center position of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle. None means no fill.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle. None means no stroke.
     * @return
+    *   A `VectorGraphic` representing the isosceles triangle.
+    * @throws IllegalArgumentException
+    *   If either `height` or `baseLength` is negative.
     */
   def basedOnHeightAndBase(
       height: Double,
       baseLength: Double,
       center: Pos,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
     validateSide(baseLength, "base")
@@ -324,28 +237,37 @@ object Triangle:
     if height < 0 then
       throw new IllegalArgumentException(s"Height of triangle cannot be negative (was: $height).")
 
-    createIsosceles(height / 2.0, baseLength / 2.0, center, hasBorder, hasFilling, color, fillColor)
+    createIsosceles(
+      height / 2.0,
+      baseLength / 2.0,
+      center,
+      fillStyle,
+      strokeStyle
+    )
 
-  /** Creates a new isosceles triangle that has a specific center point.
+  /** Helper method to create an isosceles triangle with a specific center point. This method
+    * calculates corner positions based on half the height and half the base length, then constructs
+    * the triangle.
     *
     * @param halfHeight
+    *   Half the height of the triangle.
     * @param halfBase
+    *   Half the base length of the triangle.
     * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
+    *   The center position of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle. None means no fill.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle. None means no stroke.
     * @return
+    *   A `VectorGraphic` representing the isosceles triangle.
     */
   private def createIsosceles(
       halfHeight: Double,
       halfBase: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
     val firstCorner: Pos = Pos(0, -halfHeight)
@@ -354,109 +276,75 @@ object Triangle:
 
     val thirdCorner: Pos = Pos(center.x - halfBase, halfHeight)
 
-    apply(center, firstCorner, secondCorner, thirdCorner, hasBorder, hasFilling, color, fillColor)
-
-  /** Creates a new (expectedly) scalene triangle.
-    *
-    * @param baseLength
-    * @param leftSideLength
-    * @param rightSideLength
-    *
-    * @return
-    */
-  def apply(baseLength: Double, leftSideLength: Double, rightSideLength: Double): VectorGraphic =
     apply(
-      baseLength,
-      leftSideLength,
-      rightSideLength,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
+      center,
+      firstCorner,
+      secondCorner,
+      thirdCorner,
+      fillStyle,
+      strokeStyle
     )
 
-  /** Creates a new (expectedly) scalene triangle.
+  /** Creates a scalene triangle with specified side lengths.
     *
     * @param baseLength
+    *   Length of the base of the triangle.
     * @param leftSideLength
+    *   Length of the left side of the triangle.
     * @param rightSideLength
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
+    *   Length of the right side of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
+    *   A `VectorGraphic` representing a scalene triangle.
+    * @throws IllegalArgumentException
+    *   if any of the lengths are negative or if the triangle inequality does not hold.
     */
   def apply(
       baseLength: Double,
       leftSideLength: Double,
       rightSideLength: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
     apply(
       baseLength,
       leftSideLength,
       rightSideLength,
       Pos.Origin,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle,
+      strokeStyle
     )
 
-  /** Creates a new (expectedly) scalene triangle that has a specific center point.
+  /** Creates a scalene triangle with specified side lengths.
     *
     * @param baseLength
+    *   Length of the base of the triangle.
     * @param leftSideLength
+    *   Length of the left side of the triangle.
     * @param rightSideLength
+    *   Length of the right side of the triangle.
     * @param center
-    *
+    *   Center of the triangle.
+    * @param fillStyle
+    *   Optional fill style for the triangle.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle.
     * @return
-    */
-  def apply(
-      baseLength: Double,
-      leftSideLength: Double,
-      rightSideLength: Double,
-      center: Pos
-  ): VectorGraphic =
-    apply(
-      baseLength,
-      leftSideLength,
-      rightSideLength,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** Creates a new (expectedly) scalene triangle that has a specific center point.
-    *
-    * @param baseLength
-    * @param leftSideLength
-    * @param rightSideLength
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing a scalene triangle.
+    * @throws IllegalArgumentException
+    *   if any of the lengths are negative or if the triangle inequality does not hold.
     */
   def apply(
       baseLength: Double,
       leftSideLength: Double,
       rightSideLength: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-
     validateSides(baseLength, leftSideLength, rightSideLength)
 
     val leftAngle: Double =
@@ -478,9 +366,7 @@ object Triangle:
         val halfWidth = (prelimTop.x.abs + baseLength) / 2.0
         halfWidth - baseLength
 
-    // TODO: Fix: X-offset - 1 !!!!
-
-    val halfHeight = (prelimTop.y - 1) / 2.0
+    val halfHeight = prelimTop.y / 2.0
 
     val firstCorner: Pos = Pos(prelimTop.x + xOffset, -halfHeight)
 
@@ -488,49 +374,63 @@ object Triangle:
 
     val thirdCorner: Pos = Pos(secondCorner.x + baseLength, halfHeight)
 
-    apply(center, firstCorner, secondCorner, thirdCorner, hasBorder, hasFilling, color, fillColor)
+    apply(
+      center,
+      firstCorner,
+      secondCorner,
+      thirdCorner,
+      fillStyle,
+      strokeStyle
+    )
 
-  /** Creates a new (expectedly) scalene triangle.
+  /** Creates a new scalene triangle based on corner positions relative to a center.
     *
     * @param center
+    *   The center position of the triangle.
     * @param firstCornerRelativeToCenter
+    *   Position of the first corner relative to the center.
     * @param secondCornerRelativeToCenter
+    *   Position of the second corner relative to the center.
     * @param thirdCornerRelativeToCenter
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
+    *   Position of the third corner relative to the center.
+    * @param fillStyle
+    *   Optional fill style for the triangle. None means no fill.
+    * @param strokeStyle
+    *   Optional stroke style for the triangle. None means no stroke.
     * @return
+    *   A `VectorGraphic` representing a scalene triangle.
     */
   private def apply(
       center: Pos,
       firstCornerRelativeToCenter: Pos,
       secondCornerRelativeToCenter: Pos,
       thirdCornerRelativeToCenter: Pos,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
     val points: Seq[Pos] =
       Seq(firstCornerRelativeToCenter, secondCornerRelativeToCenter, thirdCornerRelativeToCenter)
 
-    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, fillStyle, strokeStyle)
 
-  /** Test if the triangle inequality holds for the given side lengths.
+  /** Validates the lengths of the sides of a triangle to ensure they adhere to the triangle
+    * inequality theorem.
     *
     * @param baseLength
-    *   length of the base
+    *   Length of the base side of the triangle.
     * @param leftSideLength
-    *   length of the left side
+    *   Length of the left side of the triangle.
     * @param rightSideLength
-    *   length of the right side
-    *
-    * @return
+    *   Length of the right side of the triangle.
+    * @throws IllegalArgumentException
+    *   If the side lengths do not satisfy the triangle inequality theorem.
     */
-  def validateSides(baseLength: Double, leftSideLength: Double, rightSideLength: Double): Unit =
+  private def validateSides(
+      baseLength: Double,
+      leftSideLength: Double,
+      rightSideLength: Double
+  ): Unit =
 
     validateSide(baseLength, "base")
     validateSide(leftSideLength, "left side")
@@ -538,29 +438,33 @@ object Triangle:
 
     checkTriangleInequality(baseLength, leftSideLength, rightSideLength)
 
-  /** @param length
-    * @param name
+  /** Validates that a given side length is not negative.
     *
-    * @return
+    * @param length
+    *   The length of the side.
+    * @param name
+    *   The name of the side (for error messages).
+    * @throws IllegalArgumentException
+    *   If the length is negative.
     */
-  def validateSide(length: Double, name: String): Unit =
+  private def validateSide(length: Double, name: String): Unit =
     if length < 0 then
       throw new IllegalArgumentException(
         s"Length of triangle's $name cannot be negative (was: $length)."
       )
 
-  /** Test if the triangle inequality holds for the given side lengths.
+  /** Checks the triangle inequality theorem for the given side lengths.
     *
     * @param a
-    *   length of first side
+    *   Length of the first side.
     * @param b
-    *   length of second side
+    *   Length of the second side.
     * @param c
-    *   length of third side
-    *
-    * @return
+    *   Length of the third side.
+    * @throws IllegalArgumentException
+    *   If the side lengths do not satisfy the triangle inequality theorem.
     */
-  def checkTriangleInequality(a: Double, b: Double, c: Double): Unit =
+  private def checkTriangleInequality(a: Double, b: Double, c: Double): Unit =
     if !((a + b >= c) && (a + c >= b) && (b + c >= a)) then
       throw new IllegalArgumentException(
         s"Illegal side lengths ($a, $b, $c): The triangle inequality does not hold."

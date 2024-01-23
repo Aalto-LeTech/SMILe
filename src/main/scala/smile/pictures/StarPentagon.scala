@@ -1,18 +1,22 @@
 package smile.pictures
 
-import smile.Settings.*
-import smile.colors.Color
 import smile.modeling.{Angle, Pos}
 
-/** An object-based API for creating regular star (= concave) pentagons.
-  *
-  * @author
-  *   Aleksi Lukkarinen
-  * @author
-  *   Jaakko Nakaza
+/** Factory object for creating star-shaped pentagons.
   */
 object StarPentagon:
 
+  /** Intersperses elements of two lists, starting with the first element of the first list.
+    *
+    * @param firstList
+    *   The first list of elements.
+    * @param secondList
+    *   The second list of elements.
+    * @tparam ListItem
+    *   The type of elements in the lists.
+    * @return
+    *   A list containing elements from both lists, starting with the first list.
+    */
   private def intersperse[ListItem](
       firstList: List[ListItem],
       secondList: List[ListItem]
@@ -20,165 +24,134 @@ object StarPentagon:
     case first :: tail => first :: intersperse(secondList, tail)
     case _             => secondList
 
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param cuspRadiusInPixels
+  /** Creates a star pentagon with specified dimensions, fill, and stroke styles.
     *
+    * @param width
+    *   Width of the bounding box of the star pentagon.
+    * @param height
+    *   Height of the bounding box of the star pentagon.
+    * @param cuspRadius
+    *   Radius from the center to the inner corners of the star.
+    * @param fillStyle
+    *   Optional fill style for the star pentagon.
+    * @param strokeStyle
+    *   Optional stroke style for the star pentagon.
     * @return
+    *   A `VectorGraphic` representing the star pentagon.
+    * @throws IllegalArgumentException
+    *   If any of the dimensions are negative.
     */
   def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
-      cuspRadiusInPixels: Double
+      width: Double,
+      height: Double,
+      cuspRadius: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
     apply(
-      widthInPixels,
-      heightInPixels,
-      cuspRadiusInPixels,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param cuspRadiusInPixels
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
-  def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
-      cuspRadiusInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
-  ): VectorGraphic =
-    apply(
-      widthInPixels,
-      heightInPixels,
-      cuspRadiusInPixels,
+      width,
+      height,
+      cuspRadius,
       Pos.Origin,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle,
+      strokeStyle
     )
 
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param cuspRadiusInPixels
-    * @param center
+  /** Creates a star pentagon with specified dimensions, center position, fill, and stroke styles.
     *
+    * @param width
+    *   Width of the bounding box of the star pentagon.
+    * @param height
+    *   Height of the bounding box of the star pentagon.
+    * @param cuspRadius
+    *   Radius from the center to the inner corners of the star.
+    * @param center
+    *   Center position of the star pentagon.
+    * @param fillStyle
+    *   Optional fill style for the star pentagon.
+    * @param strokeStyle
+    *   Optional stroke style for the star pentagon.
     * @return
+    *   A `VectorGraphic` representing the star pentagon centered at the given position.
+    * @throws IllegalArgumentException
+    *   If any of the dimensions are negative.
     */
   def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
-      cuspRadiusInPixels: Double,
-      center: Pos
-  ): VectorGraphic =
-    apply(
-      widthInPixels,
-      heightInPixels,
-      cuspRadiusInPixels,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param cuspRadiusInPixels
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
-    */
-  def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
-      cuspRadiusInPixels: Double,
+      width: Double,
+      height: Double,
+      cuspRadius: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
-    if widthInPixels < 0 then
+    if width < 0 then
       throw new IllegalArgumentException(
-        s"Star pentagon's width cannot be negative (was: $widthInPixels)."
+        s"Star pentagon's width cannot be negative (was: $width)."
       )
 
-    if heightInPixels < 0 then
+    if height < 0 then
       throw new IllegalArgumentException(
-        s"Star pentagon's width cannot be negative (was: $heightInPixels)."
+        s"Star pentagon's width cannot be negative (was: $height)."
       )
 
-    if cuspRadiusInPixels < 0 then
+    if cuspRadius < 0 then
       throw new IllegalArgumentException(
-        s"Length of star pentagon's cusp radius cannot be negative (was: $cuspRadiusInPixels)."
+        s"Length of star pentagon's cusp radius cannot be negative (was: $cuspRadius)."
       )
 
-    val circumRadius = Pentagon.limitCircumRadiusTo(widthInPixels, heightInPixels)
+    val circumradius = Pentagon.limitCircumradiusTo(width, height)
 
-    val outerPoints = Pentagon.pointsFor(circumRadius, Angle.Zero).toList
-    val innerPoints = cuspRadiusPointsFor(cuspRadiusInPixels).toList
-    val points      = intersperse(outerPoints, innerPoints)
+    apply(circumradius, cuspRadius, center, fillStyle, strokeStyle)
 
-    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
-
-  /** @param circumRadiusInPixels
-    * @param cuspRadiusInPixels
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
+  /** Creates a star pentagon with specified circumradius, cusp radius, center position, fill, and
+    * stroke styles.
     *
+    * @param circumradius
+    *   Radius from the center to the outer corners of the star.
+    * @param cuspRadius
+    *   Radius from the center to the inner corners of the star.
+    * @param center
+    *   Center position of the star pentagon.
+    * @param fillStyle
+    *   Optional fill style for the star pentagon.
+    * @param strokeStyle
+    *   Optional stroke style for the star pentagon.
     * @return
+    *   A `VectorGraphic` representing the star pentagon centered at the given position.
+    * @throws IllegalArgumentException
+    *   If either circumradius or cuspRadius are negative.
     */
   def apply(
-             circumRadiusInPixels: Double = DefaultCircleRadiusInPixels,
-             cuspRadiusInPixels: Double = DefaultStarCuspRadiusInPixels,
-             center: Pos = Pos.Origin,
-             hasBorder: Boolean = ShapesHaveBordersByDefault,
-             hasFilling: Boolean = ShapesHaveFillingsByDefault,
-             color: Color = DefaultPrimaryColor,
-             fillColor: Color = DefaultSecondaryColor
+      circumradius: Double,
+      cuspRadius: Double,
+      center: Pos,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
 
-    if circumRadiusInPixels < 0 then
+    if circumradius < 0 then
       throw new IllegalArgumentException(
-        s"Length of star pentagon's circum radius cannot be negative (was: $circumRadiusInPixels)."
+        s"Length of star pentagon's circumradius cannot be negative (was: $circumradius)."
       )
 
-    if cuspRadiusInPixels < 0 then
+    if cuspRadius < 0 then
       throw new IllegalArgumentException(
-        s"Length of star pentagon's cusp radius cannot be negative (was: $cuspRadiusInPixels)."
+        s"Length of star pentagon's cusp radius cannot be negative (was: $cuspRadius)."
       )
 
-    val outerPoints = Pentagon.pointsFor(circumRadiusInPixels, Angle.Zero).toList
-    val innerPoints = cuspRadiusPointsFor(cuspRadiusInPixels).toList
+    val outerPoints = Pentagon.pointsFor(circumradius, Angle.Zero).toList
+    val innerPoints = cuspRadiusPointsFor(cuspRadius).toList
     val points      = intersperse(outerPoints, innerPoints)
 
-    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
+    Polygon(center, points, fillStyle, strokeStyle)
 
-  /** @param cuspRadiusInPixels
+  /** Generates the inner cusp points of a star pentagon.
     *
+    * @param cuspRadius
+    *   Radius from the center to the inner corners of the star.
     * @return
+    *   A sequence of positions for the inner points.
     */
-  def cuspRadiusPointsFor(cuspRadiusInPixels: Double): Seq[Pos] =
-    Pentagon.pointsFor(cuspRadiusInPixels, Pentagon.RotationalSymmetryAngle / 2)
+  private def cuspRadiusPointsFor(cuspRadius: Double): Seq[Pos] =
+    Pentagon.pointsFor(cuspRadius, Pentagon.RotationalSymmetryAngle / 2)

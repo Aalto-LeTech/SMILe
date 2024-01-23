@@ -1,203 +1,127 @@
 package smile.pictures
 
-import smile.Settings.*
-import smile.colors.Color
 import smile.modeling.{Angle, Pos}
 
-/** An object-based API for creating regular convex pentagons.
-  *
-  * @author
-  *   Aleksi Lukkarinen
-  * @author
-  *   Jaakko Nakaza
+/** Factory object for creating polygons.
   */
 object Pentagon:
-
-  /** Magnitude of regular convex pentagon's internal angles. */
-  lazy val InternalAngle: Angle = Angle(108)
 
   /** Magnitude of regular convex pentagon's rotational symmetry angle. */
   lazy val RotationalSymmetryAngle: Angle = Angle(72)
 
-  /** The ratio of regular convex pentagon's height and side length. */
-  lazy val HeightPerSideRatio: Double = Math.sqrt(5.0 + 2.0 * Math.sqrt(5.0)) / 2.0
-
-  /** The ratio of regular convex pentagon's diagonal length (i.e., width) and side length. */
-  lazy val DiagonalPerSideRatio: Double = (1.0 + Math.sqrt(5.0)) / 2.0
-
   /** The ratio of regular convex pentagon's diagonal length (i.e., width) and height. */
-  lazy val DiagonalPerHeightRatio: Double =
+  private lazy val DiagonalPerHeightRatio: Double =
     (1.0 + Math.sqrt(5.0)) / Math.sqrt(5.0 + 2.0 * Math.sqrt(5.0))
 
   /** The ratio of regular convex pentagon's diagonal length and circumradius. */
-  lazy val DiagonalPerCircumradiusRatio: Double = Math.sqrt((5.0 + Math.sqrt(5.0)) / 2.0)
+  private lazy val DiagonalPerCircumradiusRatio: Double = Math.sqrt((5.0 + Math.sqrt(5.0)) / 2.0)
 
-  /** @param widthInPixels
-    * @param heightInPixels
+  /** Creates a pentagon based on its width, height, center position, fill style, and stroke style.
     *
+    * @param width
+    *   The width of the pentagon (diagonal length) in pixels.
+    * @param height
+    *   The height of the pentagon in pixels.
+    * @param center
+    *   The center position of the pentagon.
+    * @param fillStyle
+    *   The fill style of the pentagon.
+    * @param strokeStyle
+    *   The stroke style of the pentagon.
     * @return
-    */
-  def apply(widthInPixels: Double, heightInPixels: Double): VectorGraphic =
-    apply(
-      widthInPixels,
-      heightInPixels,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
-    *
-    * @return
+    *   A `VectorGraphic` representing the pentagon.
+    * @throws IllegalArgumentException
+    *   If either width or height is negative.
     */
   def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      width: Double,
+      height: Double,
+      center: Pos = Pos.Origin,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(widthInPixels, heightInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    if width < 0 then
+      throw new IllegalArgumentException(
+        s"Pentagon's width cannot be negative (was: $width)."
+      )
+    if height < 0 then
+      throw new IllegalArgumentException(
+        s"Pentagon's height cannot be negative (was: $height)."
+      )
 
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param center
-    *
-    * @return
-    */
-  def apply(widthInPixels: Double, heightInPixels: Double, center: Pos): VectorGraphic =
-    apply(
-      widthInPixels,
-      heightInPixels,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
+    val circumradius = limitCircumradiusTo(width, height)
 
-  /** @param widthInPixels
-    * @param heightInPixels
-    * @param center
-    * @param hasBorder
-    * @param hasFilling
-    * @param color
-    * @param fillColor
+    apply(circumradius, center, fillStyle, strokeStyle)
+  end apply
+
+  /** Creates a pentagon based on its circumradius, center position, fill style, and stroke style.
     *
+    * @param circumradius
+    *   The circumradius of the pentagon in pixels.
+    * @param center
+    *   The center position of the pentagon.
+    * @param fillStyle
+    *   The fill style of the pentagon.
+    * @param strokeStyle
+    *   The stroke style of the pentagon.
     * @return
+    *   A `VectorGraphic` representing the pentagon.
+    * @throws IllegalArgumentException
+    *   If the circumradius is negative.
     */
   def apply(
-      widthInPixels: Double,
-      heightInPixels: Double,
+      circumradius: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-
-    if widthInPixels < 0 then
+    if circumradius < 0 then
       throw new IllegalArgumentException(
-        s"Pentagon's width cannot be negative (was: $widthInPixels)."
+        s"Length of pentagon's circumradius cannot be negative (was: $circumradius)."
       )
 
-    if heightInPixels < 0 then
-      throw new IllegalArgumentException(
-        s"Pentagon's height cannot be negative (was: $heightInPixels)."
-      )
+    val points = pointsFor(circumradius, Angle.Zero)
 
-    val circumRadius = limitCircumRadiusTo(widthInPixels, heightInPixels)
-    val points       = pointsFor(circumRadius, Angle.Zero)
+    Polygon(center, points, fillStyle, strokeStyle)
+  end apply
 
-    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
-
-  /** @param circumRadiusInPixels
-    * @param center
+  /** Generates the points for a pentagon given its circumradius and a starting angle.
     *
+    * @param circumradius
+    *   The circumradius of the pentagon in pixels.
+    * @param startAngle
+    *   The starting angle for the first point of the pentagon.
     * @return
+    *   A sequence of positions defining the vertices of the pentagon.
     */
-  def apply(
-             circumRadiusInPixels: Double,
-             center: Pos = Pos.Origin,
-             hasBorder: Boolean = ShapesHaveBordersByDefault,
-             hasFilling: Boolean = ShapesHaveFillingsByDefault,
-             color: Color = DefaultPrimaryColor,
-             fillColor: Color = DefaultSecondaryColor
-  ): VectorGraphic =
+  def pointsFor(circumradius: Double, startAngle: Angle): Seq[Pos] =
 
-    if circumRadiusInPixels < 0 then
-      throw new IllegalArgumentException(
-        s"Length of pentagon's circumradius cannot be negative (was: $circumRadiusInPixels)."
-      )
-
-    val points = pointsFor(circumRadiusInPixels, Angle.Zero)
-
-    Polygon(center, points, hasBorder, hasFilling, color, fillColor)
-
-  /** @param circumRadiusInPixels
-    *
-    * @return
-    */
-  def pointsFor(circumRadiusInPixels: Double, startAngle: Angle): Seq[Pos] =
-
-    val firstPointCandidate = Pos(0, -circumRadiusInPixels)
+    val firstPointCandidate = Pos(0, -circumradius)
     val firstPoint          = firstPointCandidate.rotateByAroundOrigin(startAngle.inDegrees)
 
     val symmetryAngle  = RotationalSymmetryAngle.inDegrees
     val rotationAngles = Seq.tabulate(5)(n => n * symmetryAngle).tail
 
     firstPoint +: rotationAngles.map(firstPoint.rotateByAroundOrigin)
+  end pointsFor
 
-  /** @param widthInPixels
-    * @param heightInPixels
+  /** Calculates the maximum possible circumradius for a pentagon with given width and height,
+    * ensuring that the pentagon fits within these dimensions.
     *
+    * @param width
+    *   The width constraint in pixels.
+    * @param height
+    *   The height constraint in pixels.
     * @return
+    *   The maximum possible circumradius that fits within the given dimensions.
     */
-  def limitCircumRadiusTo(widthInPixels: Double, heightInPixels: Double): Double =
+  def limitCircumradiusTo(width: Double, height: Double): Double =
+    val heightBasedDiagonal = diagonalFromHeight(height)
+    val effectiveDiagonal   = heightBasedDiagonal.min(width)
+    circumradiusFromDiagonal(effectiveDiagonal)
 
-    val heightBasedDiagonal = diagonalFromHeight(heightInPixels)
-    val effectiveDiagonal   = heightBasedDiagonal.min(widthInPixels)
-
-    circumRadiusFromDiagonal(effectiveDiagonal)
-
-  /** @param height
-    *
-    * @return
-    */
-  def diagonalFromHeight(height: Double): Double =
+  private def diagonalFromHeight(height: Double): Double =
     DiagonalPerHeightRatio * height
 
-  /** @param side
-    *
-    * @return
-    */
-  def diagonalLengthFromSideLength(side: Double): Double =
-    DiagonalPerSideRatio * side
-
-  /** @param diagonal
-    *
-    * @return
-    */
-  def sideLengthFromDiagonalLength(diagonal: Double): Double =
-    diagonal / DiagonalPerSideRatio
-
-  /** @param height
-    *
-    * @return
-    */
-  def sideLengthFromHeight(height: Double): Double =
-    height / HeightPerSideRatio
-
-  /** @param diagonal
-    *
-    * @return
-    */
-  def circumRadiusFromDiagonal(diagonal: Double): Double =
+  private def circumradiusFromDiagonal(diagonal: Double): Double =
     diagonal / DiagonalPerCircumradiusRatio

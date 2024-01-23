@@ -1,47 +1,39 @@
 package smile.pictures
 
-import smile.Settings.*
-import smile.colors.Color
-import smile.modeling.{Angle, Len, Pos}
+import smile.modeling.{Angle, Pos}
 
+/** Factory object for creating circles.
+  */
 object Circle:
-  
-  def apply(center: Pos, radiusInPixels: Double): VectorGraphic =
-    apply(
-      center,
-      radiusInPixels,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
 
+  /** Creates a circle represented as an `Arc` object. This is because a circle is a special case of
+    * an arc that spans 360 degrees.
+    *
+    * @param center
+    *   The center position of the circle.
+    * @param radius
+    *   The radius of the circle in pixels.
+    * @param fillStyle
+    *   Optional fill style to apply to the circle. Determines the inside color.
+    * @param strokeStyle
+    *   Optional stroke style to apply to the circle's perimeter. Defines the outline appearance.
+    * @return
+    *   A `VectorGraphic` instance representing the circle, specifically an `Arc` with full angular
+    *   extent.
+    */
   def apply(
       center: Pos,
-      radiusInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      radius: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(center, Len(radiusInPixels * 2), hasBorder, hasFilling, color, fillColor)
-
-  def apply(
-      center: Pos,
-      diameter: Len = Len(DefaultCircleRadiusInPixels),
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
-  ): VectorGraphic =
+    val diameter = radius * 2
     new Arc(
       center,
-      diameter.inPixels,
-      diameter.inPixels,
+      diameter,
+      diameter,
       startAngle = Angle.Zero.inDegrees,
       arcAngle = Angle.FullAngleInDegrees,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle = fillStyle,
+      strokeStyle = strokeStyle
     )

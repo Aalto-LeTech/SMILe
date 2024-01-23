@@ -2,13 +2,19 @@ package smile
 
 import smile.colors.Color
 import smile.colors.PresetColor.{Black, LightBlue, Transparent}
-import smile.modeling.{Angle, HorizontalAlignment, Pos, PositionType, VerticalAlignment}
+import smile.modeling.*
 
+/** Settings Configuration for the SMILe Graphics Library.
+  *
+  * This object contains global settings affecting the behavior and appearance of graphical elements
+  * created using the SMILe library. These settings can be modified to change default behaviors
+  * across various operations and elements.
+  */
 object Settings:
   var DrawingIsAntiAliased: Boolean                            = true
   var NewBitmapsAreDisplayedAutomatically: Boolean             = false
   var BitmapsAreDisplayedAutomaticallyAfterOperations: Boolean = false
-  var ShapesHaveBordersByDefault: Boolean                      = true
+  var ShapesHaveStrokesByDefault: Boolean                      = true
   var ShapesHaveFillingsByDefault: Boolean                     = true
   var CanvasesAreResizedBasedOnTransformations: Boolean        = true
   var DefaultBitmapWidthInPixels: Int                          = 50

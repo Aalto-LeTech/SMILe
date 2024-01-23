@@ -1,45 +1,41 @@
 package smile.pictures
 
-import smile.colors.Color
-import smile.modeling.{Angle, Len, Pos}
+import smile.modeling.{Angle, Pos}
 
+/** Factory object for creating ellipses.
+  */
 object Ellipse:
-  def apply(
-      center: Pos,
-      semiMajorAxisInPixels: Double,
-      semiMinorAxisInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
-  ): VectorGraphic =
-    apply(
-      center,
-      Len(2 * semiMajorAxisInPixels),
-      Len(2 * semiMinorAxisInPixels),
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
-    )
 
+  /** Creates an ellipse represented as an `Arc` object. An ellipse is specified by its center, the
+    * lengths of its semi-major and semi-minor axes, and optional styles for filling and stroking.
+    *
+    * @param center
+    *   The center position of the ellipse.
+    * @param semiMajorAxis
+    *   The length of the semi-major axis in pixels.
+    * @param semiMinorAxis
+    *   The length of the semi-minor axis in pixels.
+    * @param fillStyle
+    *   Optional fill style to apply to the ellipse. Determines the inside color.
+    * @param strokeStyle
+    *   Optional stroke style to apply to the ellipse's perimeter. Defines the outline appearance.
+    * @return
+    *   A `VectorGraphic` instance representing the ellipse, specifically an `Arc` with a full
+    *   angular extent.
+    */
   def apply(
       center: Pos,
-      width: Len,
-      height: Len,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      semiMajorAxis: Double,
+      semiMinorAxis: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
     Arc(
       center,
-      width.inPixels,
-      height.inPixels,
+      semiMajorAxis * 2,
+      semiMinorAxis * 2,
       startAngle = Angle.Zero.inDegrees,
       arcAngle = Angle.FullAngleInDegrees,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle = fillStyle,
+      strokeStyle = strokeStyle
     )

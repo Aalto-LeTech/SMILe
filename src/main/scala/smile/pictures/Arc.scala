@@ -1,67 +1,39 @@
 package smile.pictures
 
 import smile.Settings.*
-import smile.colors.Color
 import smile.modeling.{Angle, Bounds, Pos, Transformer}
 
-/** An [[Arc]] is a [[VectorGraphic]] that is defined by a position, a width, a height, a start
-  * angle, an arc angle,
+/** Represents an arc, a part of a circle or ellipse, defined by its center position, width, height,
+  * start angle, arc angle, and optional fill and stroke styles.
+  *
   * @param pos
-  *   center point of the [[Arc]]
+  *   The center point of the arc.
   * @param width
-  *   width in pixels
+  *   The width of the arc in pixels.
   * @param height
-  *   height in pixels
+  *   The height of the arc in pixels.
   * @param startAngle
-  *   start angle in degrees
+  *   The start angle of the arc in degrees.
   * @param arcAngle
-  *   arc angle in degrees
+  *   The angular extent of the arc in degrees.
   * @param rotationAngle
-  *   rotation angle in degrees
-  * @param hasBorder
-  *   whether this [[Arc]] has a border
-  * @param hasFilling
-  *   whether this [[Arc]] has a filling
-  * @param color
-  *   color of the border
-  * @param fillColor
-  *   color of the filling
+  *   The rotation angle of the arc in degrees, affecting its orientation.
+  * @param fillStyle
+  *   Optional fill style for the arc.
+  * @param strokeStyle
+  *   Optional stroke style defining the arc's outline appearance.
   */
 class Arc(
-    pos: Pos,
+    pos: Pos = DefaultPosition,
     val width: Double,
     val height: Double,
-    val startAngle: Double,
-    val arcAngle: Double,
-    val rotationAngle: Double,
-    val hasBorder: Boolean,
-    val hasFilling: Boolean,
-    val color: Color,
-    val fillColor: Color
+    val startAngle: Double = Angle.Zero.inDegrees,
+    val arcAngle: Double = Angle.FullAngleInDegrees,
+    val rotationAngle: Double = DefaultRotationAngleInDegrees,
+    override val fillStyle: Option[FillStyle],
+    override val strokeStyle: Option[StrokeStyle]
 ) extends VectorGraphic:
-  def this(
-      position: Pos = DefaultPosition,
-      width: Double,
-      height: Double,
-      startAngle: Double = Angle.Zero.inDegrees,
-      arcAngle: Double = Angle.FullAngleInDegrees,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
-  ) =
-    this(
-      position,
-      width,
-      height,
-      startAngle,
-      arcAngle,
-      rotationAngle = DefaultRotationAngleInDegrees,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
-    )
+
   override lazy val position: Pos = pos
 
   private lazy val corners: Seq[Pos] =
@@ -75,8 +47,12 @@ class Arc(
       Transformer.rotate(position + (-halfWidth, halfHeight), rotationAngle)
     )
 
+  /** Checks if the arc represents a complete cycle (360 degrees) or more.
+    */
   lazy val isFullCycle: Boolean = arcAngle.abs >= Angle.FullAngleInDegrees
 
+  /** Determines if the arc represents a perfect circle, based on its width and height.
+    */
   lazy val isCircle: Boolean = isFullCycle && (width == height)
 
   /** Transformed upper left corner of this [[Arc]]. */
@@ -102,10 +78,8 @@ class Arc(
       startAngle,
       arcAngle,
       rotationAngle,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle,
+      strokeStyle
     )
 
   private def internalCopy(
@@ -115,10 +89,8 @@ class Arc(
       newStartAngle: Double = startAngle,
       newArcAngle: Double = arcAngle,
       newRotationAngle: Double = rotationAngle,
-      newHasBorder: Boolean = hasBorder,
-      newHasFilling: Boolean = hasFilling,
-      newColor: Color = color,
-      newFillColor: Color = fillColor
+      newFillStyle: Option[FillStyle] = fillStyle,
+      newStrokeStyle: Option[StrokeStyle] = strokeStyle
   ): Arc =
     val limitedArcAngle =
       newArcAngle
@@ -132,10 +104,8 @@ class Arc(
       newStartAngle,
       limitedArcAngle,
       newRotationAngle,
-      newHasBorder,
-      newHasFilling,
-      newColor,
-      newFillColor
+      newFillStyle,
+      newStrokeStyle
     )
 
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Arc =

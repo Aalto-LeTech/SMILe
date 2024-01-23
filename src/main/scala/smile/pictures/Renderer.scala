@@ -111,10 +111,8 @@ object Renderer:
           arc.startAngle,
           arc.arcAngle,
           arc.rotationAngle,
-          arc.hasBorder,
-          arc.hasFilling,
-          arc.color,
-          arc.fillColor
+          arc.fillStyle,
+          arc.strokeStyle
         )
       case bitmap: Bitmap =>
         val topLeft  = bitmap.boundary.upperLeftCorner
@@ -150,10 +148,8 @@ object Renderer:
             xs,
             ys,
             points.length,
-            polygon.hasBorder,
-            polygon.hasFilling,
-            polygon.color,
-            polygon.fillColor
+            polygon.fillStyle,
+            polygon.strokeStyle
           )
       case text: Text => targetDrawingSurface.drawText(text)
 

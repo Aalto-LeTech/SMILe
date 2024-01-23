@@ -1,106 +1,124 @@
 package smile.pictures
 
-import smile.Settings.{DefaultPrimaryColor, DefaultSecondaryColor, ShapesHaveBordersByDefault, ShapesHaveFillingsByDefault}
-import smile.colors.Color
 import smile.modeling.Pos
 
+/** Factory object for creating rectangles.
+  */
 object Rectangle:
-  def apply(sideLengthInPixels: Double): VectorGraphic =
-    apply(
-      sideLengthInPixels,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
 
+  /** Creates a square with a given side length, fill style, and stroke style.
+    *
+    * @param sideLength
+    *   The length of each side of the square.
+    * @param fillStyle
+    *   Optional fill style for the square.
+    * @param strokeStyle
+    *   Optional stroke style for the square.
+    * @return
+    *   A `VectorGraphic` representing the square.
+    */
   def apply(
-      sideLengthInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      sideLength: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(sideLengthInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    apply(sideLength, Pos.Origin, fillStyle, strokeStyle)
 
-  def apply(sideLengthInPixels: Double, center: Pos): VectorGraphic =
-    apply(
-      sideLengthInPixels,
-      center,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
-
+  /** Creates a square with a given side length, center position, fill style, and stroke style.
+    *
+    * @param sideLength
+    *   The length of each side of the square.
+    * @param center
+    *   The center position of the square.
+    * @param fillStyle
+    *   Optional fill style for the square.
+    * @param strokeStyle
+    *   Optional stroke style for the square.
+    * @return
+    *   A `VectorGraphic` representing the square.
+    * @throws IllegalArgumentException
+    *   If the side length is negative.
+    */
   def apply(
-      sideLengthInPixels: Double,
+      sideLength: Double,
       center: Pos,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    require(
-      sideLengthInPixels >= 0.0,
-      s"Rectangle's side length cannot be negative (was: $sideLengthInPixels)."
-    )
-    apply(sideLengthInPixels, sideLengthInPixels, center, hasBorder, hasFilling, color, fillColor)
+    if sideLength < 0.0 then
+      throw new IllegalArgumentException(
+        s"Square's side length cannot be negative (was: $sideLength)."
+      )
 
-  def apply(baseLengthInPixels: Double, heightInPixels: Double): VectorGraphic =
-    apply(
-      baseLengthInPixels,
-      heightInPixels,
-      Pos.Origin,
-      hasBorder = ShapesHaveBordersByDefault,
-      hasFilling = ShapesHaveFillingsByDefault,
-      color = DefaultPrimaryColor,
-      fillColor = DefaultSecondaryColor
-    )
+    apply(sideLength, sideLength, center, fillStyle, strokeStyle)
 
+  /** Creates a rectangle with a given base length, height, fill style, and stroke style.
+    *
+    * @param baseLength
+    *   The length of the base of the rectangle.
+    * @param height
+    *   The height of the rectangle.
+    * @param fillStyle
+    *   Optional fill style for the rectangle.
+    * @param strokeStyle
+    *   Optional stroke style for the rectangle.
+    * @return
+    *   A `VectorGraphic` representing the rectangle.
+    */
   def apply(
-      baseLengthInPixels: Double,
-      heightInPixels: Double,
-      hasBorder: Boolean,
-      hasFilling: Boolean,
-      color: Color,
-      fillColor: Color
+      baseLength: Double,
+      height: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(baseLengthInPixels, heightInPixels, Pos.Origin, hasBorder, hasFilling, color, fillColor)
+    apply(baseLength, height, Pos.Origin, fillStyle, strokeStyle)
 
+  /** Creates a rectangle with a given base length, height, center position, fill style, and stroke
+    * style.
+    *
+    * @param baseLength
+    *   The length of the base of the rectangle.
+    * @param height
+    *   The height of the rectangle.
+    * @param center
+    *   The center position of the rectangle.
+    * @param fillStyle
+    *   Optional fill style for the rectangle.
+    * @param strokeStyle
+    *   Optional stroke style for the rectangle.
+    * @return
+    *   A `VectorGraphic` representing the rectangle.
+    * @throws IllegalArgumentException
+    *   If the base length or height is negative.
+    */
   def apply(
-      baseLengthInPixels: Double,
-      heightInPixels: Double,
+      baseLength: Double,
+      height: Double,
       center: Pos,
-      hasBorder: Boolean = ShapesHaveBordersByDefault,
-      hasFilling: Boolean = ShapesHaveFillingsByDefault,
-      color: Color = DefaultPrimaryColor,
-      fillColor: Color = DefaultSecondaryColor
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    require(
-      baseLengthInPixels >= 0.0,
-      s"Rectangle's base length cannot be negative (was: $baseLengthInPixels)."
-    )
-    require(heightInPixels >= 0.0, s"Rectangle's height cannot be negative (was: $heightInPixels).")
+    if baseLength < 0.0 then
+      throw new IllegalArgumentException(
+        s"Rectangle's base length cannot be negative (was: $baseLength)."
+      )
+    if height < 0.0 then
+      throw new IllegalArgumentException(s"Rectangle's height cannot be negative (was: $height).")
 
     val cornerPoints =
-      if baseLengthInPixels > 0.0 && heightInPixels > 0.0 then
-        val halfWidth  = (baseLengthInPixels - 1) / 2.0
-        val halfHeight = (heightInPixels - 1) / 2.0
+      val halfWidth  = baseLength / 2.0
+      val halfHeight = height / 2.0
 
-        Seq(
-          Pos(-halfWidth, -halfHeight),
-          Pos(halfWidth, -halfHeight),
-          Pos(halfWidth, halfHeight),
-          Pos(-halfWidth, halfHeight)
-        )
-      else Seq()
+      Seq(
+        Pos(-halfWidth, -halfHeight),
+        Pos(halfWidth, -halfHeight),
+        Pos(halfWidth, halfHeight),
+        Pos(-halfWidth, halfHeight)
+      )
 
     Polygon(
       center,
       cornerPoints,
-      hasBorder,
-      hasFilling,
-      color,
-      fillColor
+      fillStyle,
+      strokeStyle
     )
