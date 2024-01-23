@@ -6,6 +6,7 @@ import smile.infrastructure.MathUtils
   * coordinate space.
   */
 object Bounds:
+
   /** Creates a `Bounds` instance ensuring that the coordinates are sorted so the upper left is
     * truly at the top-left and the lower right is at the bottom-right.
     *

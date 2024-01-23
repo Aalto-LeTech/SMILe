@@ -1,9 +1,7 @@
 package smile.modeling
 
+import smile.infrastructure.BufferAdapter
 import smile.pictures.{PictureElement, Text}
-
-//import java.awt.FontMetrics
-//import java.awt.image.BufferedImage
 
 /** Provides utility methods for calculating boundaries around picture elements and positions.
   */
@@ -17,7 +15,6 @@ object BoundaryCalculator:
     *   A `Bounds` instance representing the minimum bounding box around all elements. If the
     *   sequence is empty, returns `NullBounds`.
     */
-
   def fromBoundaries(elements: Seq[PictureElement]): Bounds =
     if elements.isEmpty then NullBounds
     else
@@ -43,12 +40,19 @@ object BoundaryCalculator:
       Bounds(xs.min, ys.min, xs.max, ys.max)
   end fromPositions
 
+  /** Calculates the bounding box for a given text object.
+    *
+    * @param text
+    *   The `Text` object for which to calculate the bounding box.
+    * @return
+    *   The `Bounds` representing the bounding box of the text.
+    */
   def fromText(text: Text): Bounds =
-//    val g                    = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()
-//    val metrics: FontMetrics = g.getFontMetrics(text.font)
-//    val width: Int           = metrics.stringWidth(text.content)
-//    val height: Int          = metrics.getHeight
-//    val upperLeft: Pos       = text.position
-//    val lowerRight: Pos      = text.position.moveBy(width, height)
-//    Bounds(upperLeft, lowerRight)
-    Bounds(Pos(0, 0), Pos(0, 0))
+    BufferAdapter(1, 1).withGraphics2D: g =>
+      val glyphVector     = text.font.createGlyphVector(g.getFontRenderContext, text.content)
+      val visualBounds    = glyphVector.getVisualBounds
+      val textWidth       = visualBounds.getWidth / 2
+      val textHeight      = visualBounds.getHeight / 2
+      val upperLeft: Pos  = text.position.moveBy(-textWidth, -textHeight)
+      val lowerRight: Pos = text.position.moveBy(textWidth, textHeight)
+      Bounds(upperLeft, lowerRight)

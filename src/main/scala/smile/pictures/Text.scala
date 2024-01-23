@@ -1,47 +1,132 @@
 package smile.pictures
 
-import smile.colors.Color
-import smile.modeling.{BoundaryCalculator, Bounds, Pos}
+import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
 import java.awt.Font
 
-sealed trait TextAlignment
-case object LeftAlign   extends TextAlignment
-case object RightAlign  extends TextAlignment
-case object CenterAlign extends TextAlignment
-
+/** Represents text as a graphical element.
+  *
+  * @param pos
+  *   The position of the text.
+  * @param customBounds
+  *   Optional custom bounds for the text.
+  * @param content
+  *   The content of the text.
+  * @param font
+  *   The font used for rendering the text.
+  * @param fillStyle
+  *   Optional fill style for the text.
+  * @param strokeStyle
+  *   Optional stroke style for the text.
+  */
 class Text(
     pos: Pos,
+    val customBounds: Option[Bounds],
     val content: String,
     val font: Font,
-    val color: Color,
-    val alignment: TextAlignment
+    override val fillStyle: Option[FillStyle],
+    override val strokeStyle: Option[StrokeStyle]
 ) extends VectorGraphic:
+
+  /** Secondary constructor with a default font.
+    *
+    * @param pos
+    *   The position of the text.
+    * @param customBounds
+    *   Optional custom bounds for the text.
+    * @param content
+    *   The content of the text.
+    * @param size
+    *   The size of the font.
+    * @param fillStyle
+    *   Optional fill style for the text.
+    * @param strokeStyle
+    *   Optional stroke style for the text.
+    */
+  def this(
+      pos: Pos,
+      customBounds: Option[Bounds],
+      content: String,
+      size: Double,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
+  ) =
+    this(
+      pos,
+      customBounds,
+      content,
+      new Font("Arial", Font.PLAIN, size.toInt),
+      fillStyle,
+      strokeStyle
+    )
 
   override def copy(newPosition: Pos): Text = new Text(
     newPosition,
+    customBounds,
     content,
     font,
-    color,
-    alignment
+    fillStyle,
+    strokeStyle
   )
 
-  override lazy val boundary: Bounds = BoundaryCalculator.fromText(this)
+  private def internalCopy(
+      newPosition: Pos = position,
+      newCustomBounds: Option[Bounds] = customBounds,
+      newContent: String = content,
+      newFont: Font = font,
+      newFillStyle: Option[FillStyle] = fillStyle,
+      newStrokeStyle: Option[StrokeStyle] = strokeStyle
+  ): Text =
+    new Text(
+      newPosition,
+      newCustomBounds,
+      newContent,
+      newFont,
+      newFillStyle,
+      newStrokeStyle
+    )
+
+  override lazy val boundary: Bounds = customBounds.getOrElse(BoundaryCalculator.fromText(this))
 
   override lazy val position: Pos = pos
 
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Text =
-    this
+    val newBounds = Transformer.scale(
+      Seq(boundary.upperLeftCorner, boundary.lowerRightCorner),
+      horizontalFactor,
+      verticalFactor
+    )
+    internalCopy(newCustomBounds =
+      Some(
+        Bounds(
+          newBounds.head,
+          newBounds.last
+        )
+      )
+    )
 
   override def scaleBy(
       horizontalFactor: Double,
       verticalFactor: Double,
       relativityPoint: Pos
   ): Text =
-    this
+    val newBounds = Transformer.scale(
+      Seq(boundary.upperLeftCorner, boundary.lowerRightCorner),
+      horizontalFactor,
+      verticalFactor,
+      relativityPoint
+    )
+    internalCopy(newCustomBounds =
+      Some(
+        Bounds(
+          newBounds.head,
+          newBounds.last
+        )
+      )
+    )
 
   override def rotateBy(angle: Double, centerOfRotation: Pos): Text =
-    this
+    this // TODO: implement text rotation
 
-  override def rotateByAroundOrigin(angleInDegrees: Double): Text =
+  override def rotateByAroundOrigin(angle: Double): Text =
     this

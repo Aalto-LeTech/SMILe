@@ -2,11 +2,11 @@ package smile.infrastructure
 
 import smile.colors.{Color, PresetColor}
 import smile.infrastructure.Constants.MaximumOpacity
-import smile.pictures.{FillStyle, StrokeStyle, Text}
+import smile.pictures.{FillStyle, StrokeStyle}
 
+import java.awt.*
 import java.awt.geom.{AffineTransform, Arc2D, Ellipse2D, Path2D}
 import java.awt.image.BufferedImage
-import java.awt.{AlphaComposite, BasicStroke, Graphics2D, Shape}
 
 /** Extension method for `Double` to truncate its value towards zero.
   */
@@ -240,15 +240,71 @@ class DrawingSurface(val owner: BufferAdapter):
       g.setColor(color.toAWTColor)
       g.drawLine(0, 0, 0, 0)
 
-  def drawText(text: Text): Unit =
-    val x = text.position.x
-    val y = text.position.y + text.boundary.height.inPixels
-
+  /** Draws text on the drawing surface, optionally scaling to fit within specified dimensions.
+    *
+    * @param xOffsetToOrigin
+    *   The horizontal offset from the origin to the point where the text drawing begins.
+    * @param yOffsetToOrigin
+    *   The vertical offset from the origin to the point where the text drawing begins.
+    * @param isScaled
+    *   Indicates whether the text should be scaled to fit within the specified width and height.
+    * @param width
+    *   The width within which the text should fit. Used only if `isScaled` is true.
+    * @param height
+    *   The height within which the text should fit. Used only if `isScaled` is true.
+    * @param x
+    *   The x-coordinate of the center point for the text's bounding box.
+    * @param y
+    *   The y-coordinate of the center point for the text's bounding box.
+    * @param text
+    *   The text content to be drawn.
+    * @param font
+    *   The font used to draw the text.
+    * @param fillStyle
+    *   An optional fill style for the text.
+    * @param strokeStyle
+    *   An optional stroke style for the text.
+    */
+  def drawText(
+      xOffsetToOrigin: Double,
+      yOffsetToOrigin: Double,
+      isScaled: Boolean,
+      width: Double,
+      height: Double,
+      x: Double,
+      y: Double,
+      text: String,
+      font: Font,
+      fillStyle: Option[FillStyle],
+      strokeStyle: Option[StrokeStyle]
+  ): Unit =
     owner.withGraphics2D: g =>
-      g.translate(x, y)
-      g.setColor(text.color.toAWTColor)
-      g.setFont(text.font)
-      g.drawString(text.content, 0, 0)
+      val glyphVector = if isScaled then
+        val visualBounds =
+          font
+            .createGlyphVector(g.getFontRenderContext, text)
+            .getVisualBounds
+
+        val scaleX = width / visualBounds.getWidth
+        val scaleY = height / visualBounds.getHeight
+        val scaleTransform = AffineTransform.getScaleInstance(
+          scaleX,
+          scaleY
+        )
+
+        font
+          .deriveFont(scaleTransform)
+          .createGlyphVector(g.getFontRenderContext, text)
+      else font.createGlyphVector(g.getFontRenderContext, text)
+
+      val visualBounds = glyphVector.getVisualBounds
+      val translateX =
+        xOffsetToOrigin + x - visualBounds.getWidth / 2
+      val translateY =
+        yOffsetToOrigin + y - visualBounds.getHeight / 2 - visualBounds.getY
+
+      g.translate(translateX, translateY)
+      draw(g, fillStyle, strokeStyle, glyphVector.getOutline)
 
   private def draw(
       g: Graphics2D,

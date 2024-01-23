@@ -11,4 +11,4 @@ trait VectorGraphic extends PictureElement:
   /** The style used to stroke the outline of the vector graphic. If `None`, the graphic is not
     * stroked.
     */
-  val strokeStyle: Option[StrokeStyle] = None
+  val strokeStyle: Option[StrokeStyle] = None // TODO: scale stroke width?

@@ -151,6 +151,19 @@ object Renderer:
             polygon.fillStyle,
             polygon.strokeStyle
           )
-      case text: Text => targetDrawingSurface.drawText(text)
+      case text: Text =>
+        targetDrawingSurface.drawText(
+          xOffsetToOrigin,
+          yOffsetToOrigin,
+          text.customBounds.isDefined,
+          text.boundary.width.inPixels,
+          text.boundary.height.inPixels,
+          text.position.x,
+          text.position.y,
+          text.content,
+          text.font,
+          text.fillStyle,
+          text.strokeStyle
+        )
 
   end renderElement
