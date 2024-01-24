@@ -1,8 +1,5 @@
-<div align="center">
-    <img src="images/smile.png" width="500" alt="" />
-    <h1>Scala Media Interactive Learning</h1>
-</div>
-
+![smile](https://github.com/Aalto-LeTech/SMILe/assets/34682147/063c05d6-ff9e-4ea4-9ba7-41d67a268c0d)
+# Scala Media Interactive Learning
 
 This project is targeted mainly for instructors and students of introductory programming courses. From instructors'
 viewpoint, its goal is to provide means to motivate students via contextualized teaching. There are many ways to provide
