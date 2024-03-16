@@ -1,15 +1,15 @@
 package smile.pictures
 
-import smile.colors.Color
+import smile.colors.Paint
 
 import java.awt.BasicStroke
 
 /** Represents the fill style for drawing operations.
   *
-  * @param color
-  *   The color used for the fill.
+  * @param paint
+  *   The paint (single color or gradient) used for the fill.
   */
-case class FillStyle(color: Color)
+case class FillStyle(paint: Paint)
 
 /** Defines stroke styles for drawing outlines of shapes and paths, providing customization options
   * for the stroke's appearance.
@@ -44,8 +44,8 @@ object StrokeStyle:
 /** Encapsulates the style attributes for stroking operations, including color, line width, and line
   * cap and join styles.
   *
-  * @param color
-  *   The color of the stroke.
+  * @param paint
+  *   The paint (single color or gradient) used for the stroke.
   * @param width
   *   The width of the stroke. Defaults to 1.
   * @param cap
@@ -54,10 +54,11 @@ object StrokeStyle:
   *   The join style of the stroke. Defaults to Miter.
   */
 case class StrokeStyle(
-    color: Color,
+    paint: Paint,
     width: Double = 1,
     cap: StrokeStyle.Cap = StrokeStyle.Cap.Square,
-    join: StrokeStyle.Join = StrokeStyle.Join.Miter
+    join: StrokeStyle.Join = StrokeStyle.Join.Miter,
+    onTop: Boolean = true
 ):
   /** Converts this `StrokeStyle` into an AWT `BasicStroke` object.
     *

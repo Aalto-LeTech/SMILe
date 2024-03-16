@@ -1,8 +1,11 @@
 package smile
 
 import smile.colors.Color
-import smile.colors.PresetColor.{Black, LightBlue, Transparent}
+import smile.colors.PresetColor.Transparent
 import smile.modeling.*
+
+import java.awt.Image
+import java.awt.image.AffineTransformOp
 
 /** Settings Configuration for the SMILe Graphics Library.
   *
@@ -11,31 +14,32 @@ import smile.modeling.*
   * across various operations and elements.
   */
 object Settings:
-  var DrawingIsAntiAliased: Boolean                            = true
-  var NewBitmapsAreDisplayedAutomatically: Boolean             = false
-  var BitmapsAreDisplayedAutomaticallyAfterOperations: Boolean = false
-  var ShapesHaveStrokesByDefault: Boolean                      = true
-  var ShapesHaveFillingsByDefault: Boolean                     = true
-  var CanvasesAreResizedBasedOnTransformations: Boolean        = true
-  var DefaultBitmapWidthInPixels: Int                          = 50
-  var DefaultBitmapHeightInPixels: Int                         = 50
-  var BitmapWidthWarningLimitInPixels: Int                     = 800
-  var BitmapHeightWarningLimitInPixels: Int                    = 800
-  var DefaultCircleRadiusInPixels: Double                      = 100
-  var DefaultStarCuspRadiusInPixels: Double                    = 100
-  var DefaultRoundingWidthInPixels: Double                     = 20
-  var DefaultRoundingHeightInPixels: Double                    = 20
-  var DefaultPaddingInPixels: Double                           = 1
-  var DefaultArcStartAngleInDegrees: Int                       = 0
-  var DefaultArcAngleInDegrees: Int                            = 180
-  var ColorVisualizationTileSideLengthInPixels: Int            = 80
-  var DefaultBackgroundColor: Color                            = Transparent
-  var DefaultPrimaryColor: Color                               = Black
-  var DefaultSecondaryColor: Color                             = LightBlue
-  var DefaultPositionType: PositionType                        = PositionType.Center
-  var DefaultHorizontalAlignment: HorizontalAlignment          = HorizontalAlignment.Left
-  var DefaultVerticalAlignment: VerticalAlignment              = VerticalAlignment.Middle
-  val DefaultPosition: Pos                                     = Pos.Origin
-  val DefaultRotationAngle: Angle                              = Angle.Zero
-  val DefaultRotationAngleInDegrees: Double                    = DefaultRotationAngle.inDegrees
-  val IdentityScalingFactor: Double                            = 1.0
+  /** Enumeration of the different methods used for scaling of bitmaps. See [[java.awt.Image]] for
+    * details.
+    */
+  enum ScalingMethod(val value: Int):
+    case Smooth          extends ScalingMethod(Image.SCALE_SMOOTH)
+    case Fast            extends ScalingMethod(Image.SCALE_FAST)
+    case AreaAveraging   extends ScalingMethod(Image.SCALE_AREA_AVERAGING)
+    case NearestNeighbor extends ScalingMethod(-1000)
+
+  /** Enumeration of the different methods used for transforming bitmaps. See
+    * [[java.awt.image.AffineTransformOp]] for details.
+    */
+  enum TransformMethod(val value: Int):
+    case Bilinear extends TransformMethod(AffineTransformOp.TYPE_BILINEAR)
+    case Nearest  extends TransformMethod(AffineTransformOp.TYPE_NEAREST_NEIGHBOR)
+    case Bicubic  extends TransformMethod(AffineTransformOp.TYPE_BICUBIC)
+
+  var DrawingIsAntiAliased: Boolean                     = true
+  var BufferScalingMethod: ScalingMethod                = ScalingMethod.Smooth
+  var BufferTransformMethod: TransformMethod            = TransformMethod.Bilinear
+  var CanvasesAreResizedBasedOnTransformations: Boolean = true
+  var DefaultPaddingInPixels: Double                    = 0
+  var DefaultBackgroundColor: Color                     = Transparent
+  var DefaultPositionType: PositionType                 = PositionType.Center
+  var DefaultHorizontalAlignment: HorizontalAlignment   = HorizontalAlignment.Left
+  var DefaultVerticalAlignment: VerticalAlignment       = VerticalAlignment.Middle
+  var DefaultPosition: Pos                              = Pos.Origin
+  var DefaultRotationAngle: Angle                       = Angle.Zero
+  var DefaultRotationAngleInDegrees: Double             = DefaultRotationAngle.inDegrees

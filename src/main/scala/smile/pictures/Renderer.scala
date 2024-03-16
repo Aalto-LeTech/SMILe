@@ -4,6 +4,8 @@ import smile.infrastructure.Constants.MaximumOpacity
 import smile.infrastructure.{BufferAdapter, DrawingSurface}
 import smile.modeling.BoundaryCalculator
 
+import scala.annotation.tailrec
+
 /** Provides functionality for rendering pictures and their elements into bitmaps.
   */
 object Renderer:
@@ -24,7 +26,7 @@ object Renderer:
     *   A [[Bitmap]] representing the rendered picture.
     */
   def createBitmapFrom(picture: Picture): Bitmap =
-    if picture.elements.isEmpty then return new Bitmap(0, 0)
+    if picture.elements.isEmpty then return Bitmap.Empty
 
     val bounds = picture.viewport match
       case Some(viewport) => viewport.boundary
@@ -33,7 +35,7 @@ object Renderer:
     val flooredWidth  = bounds.width.floor
     val flooredHeight = bounds.height.floor
 
-    if flooredWidth < 1 || flooredHeight < 1 then return new Bitmap(0, 0)
+    if flooredWidth < 1 || flooredHeight < 1 then return Bitmap.Empty
 
     require(flooredWidth > 0 && flooredHeight > 0, "Bitmap width and height must be positive")
 
@@ -93,6 +95,7 @@ object Renderer:
     * @param yOffsetToOrigin
     *   The Y offset to the origin point for rendering.
     */
+  @tailrec
   private def renderElement(
       contentItem: PictureElement,
       targetDrawingSurface: DrawingSurface,
@@ -100,6 +103,13 @@ object Renderer:
       yOffsetToOrigin: Double
   ): Unit =
     contentItem match
+      case animatedPicture: AnimatedPicture =>
+        renderElement(
+          animatedPicture.frames(animatedPicture.currentFrameIndex),
+          targetDrawingSurface,
+          xOffsetToOrigin,
+          yOffsetToOrigin
+        )
       case arc: Arc =>
         targetDrawingSurface.drawArc(
           xOffsetToOrigin,

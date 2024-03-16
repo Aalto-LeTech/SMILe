@@ -1,5 +1,6 @@
 package smile.pictures
 
+import smile.Settings.DefaultPosition
 import smile.modeling.{Angle, Pos}
 
 /** Factory object for creating star-shaped pentagons.
@@ -52,7 +53,7 @@ object StarPentagon:
       width,
       height,
       cuspRadius,
-      Pos.Origin,
+      DefaultPosition,
       fillStyle,
       strokeStyle
     )

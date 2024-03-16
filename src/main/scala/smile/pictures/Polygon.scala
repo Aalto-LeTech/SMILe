@@ -50,15 +50,17 @@ class Polygon(
   /** Determines the corners of the polygon's bounding box.
     */
   lazy val corners: Seq[Pos] =
-    val ulX = contentBoundary.upperLeftCorner.x
-    val ulY = contentBoundary.upperLeftCorner.y
-    val lrX = contentBoundary.lowerRightCorner.x
-    val lrY = contentBoundary.lowerRightCorner.y
+    val strokeRadius = strokeStyle.map(_.width).getOrElse(0.0) / 2
+
+    val ulX = contentBoundary.upperLeftCorner.x - strokeRadius
+    val ulY = contentBoundary.upperLeftCorner.y - strokeRadius
+    val lrX = contentBoundary.lowerRightCorner.x + strokeRadius
+    val lrY = contentBoundary.lowerRightCorner.y + strokeRadius
 
     Seq(
-      position + contentBoundary.upperLeftCorner,
+      position + contentBoundary.upperLeftCorner - Pos(strokeRadius, strokeRadius),
       position + Pos(lrX, ulY),
-      position + contentBoundary.lowerRightCorner,
+      position + contentBoundary.lowerRightCorner + Pos(strokeRadius, strokeRadius),
       position + Pos(ulX, lrY)
     )
 

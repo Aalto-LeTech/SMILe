@@ -1,8 +1,9 @@
 package smile.pictures
 
+import smile.Settings.DefaultPosition
 import smile.colors.Color
 import smile.infrastructure.{BufferAdapter, ResourceFactory}
-import smile.modeling.{AffineTransformation, BoundaryCalculator, Bounds, Pos}
+import smile.modeling.*
 
 /** Companion object for the `Bitmap` class, providing factory methods for creating `Bitmap`
   * instances.
@@ -57,8 +58,8 @@ object Bitmap:
     *   A new `Bitmap` instance loaded from the specified path.
     */
   def apply(sourceResourcePath: String): Bitmap =
-    val image = ResourceFactory.bufferedImageFromPath(sourceResourcePath)
-    new Bitmap(image, Bounds(Pos.Origin, image.width, image.height))
+    val image = ResourceFactory.bufferAdapterFromPath(sourceResourcePath)
+    new Bitmap(image, Bounds(DefaultPosition, image.width, image.height))
 
   /** Creates a `Bitmap` from a collection of picture elements.
     *
@@ -78,6 +79,8 @@ object Bitmap:
     */
   def apply(picture: Picture): Bitmap = Renderer.createBitmapFrom(picture)
 
+  object Empty extends Bitmap(BufferAdapter.Empty, NullBounds)
+
 /** Represents a bitmap image, capable of holding and manipulating pixel data.
   *
   * @param buffer
@@ -95,8 +98,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   The height of the bitmap.
     */
   def this(width: Int, height: Int) =
-    this(new BufferAdapter(width, height), Bounds(Pos.Origin, width, height))
-    require(width > 0 && height > 0, "Width and height must be positive")
+    this(new BufferAdapter(width, height), Bounds(DefaultPosition, width, height))
 
   override lazy val boundary: Bounds = bounds
 
@@ -113,6 +115,9 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       boundary.moveBy(newPosition.x, newPosition.y)
     )
 
+  private def internalCopy(newBuffer: BufferAdapter = buffer, newBounds: Bounds = bounds): Bitmap =
+    new Bitmap(newBuffer, newBounds)
+
   /** Moves this `Bitmap` by specified offsets.
     *
     * @param xOffset
@@ -123,13 +128,10 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   A new `Bitmap` instance moved by the specified offsets.
     */
   override def moveBy(xOffset: Double, yOffset: Double): PictureElement =
-    new Bitmap(
-      buffer,
-      boundary.moveBy(xOffset, yOffset)
-    )
+    internalCopy(newBounds = boundary.moveBy(xOffset, yOffset))
 
   /** Creates a deep copy of this `Bitmap`. */
-  def deepCopy(): Bitmap = new Bitmap(buffer.deepCopy, boundary)
+  def deepCopy(): Bitmap = internalCopy(buffer.deepCopy)
 
   /** Gets the color of a pixel at specified coordinates. */
   def getColor(x: Int, y: Int): Color = buffer.pixelColor(x, y)
@@ -210,7 +212,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       horizontalFactor: Double,
       verticalFactor: Double,
       relativityPoint: Pos
-  ): PictureElement =
+  ): Bitmap =
     scaleTo(
       horizontalFactor * buffer.width,
       verticalFactor * buffer.height,
@@ -218,7 +220,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     )
 
   override def scaleTo(targetWidth: Double, targetHeight: Double, relativityPoint: Pos): Bitmap =
-    if targetWidth == 0 || targetHeight == 0 then return Bitmap()
+    if targetWidth.toInt == 0 || targetHeight.toInt == 0 then return Bitmap.Empty
 
     val newCenter =
       boundary.center.scaleBy(
@@ -236,7 +238,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
 
     val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
 
-    new Bitmap(newBuffer, newBounds)
+    internalCopy(newBuffer, newBounds)
   end scaleTo
 
   override def rotateBy(angle: Double, centerOfRotation: Pos): Bitmap =
@@ -257,7 +259,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     val newBounds =
       BoundaryCalculator.fromPositions(oldPositions.map(_.rotateBy(angle, centerOfRotation)))
 
-    new Bitmap(newBuffer, newBounds)
+    internalCopy(newBuffer = newBuffer, newBounds = newBounds)
   end rotateBy
 
   override def rotateByAroundOrigin(angle: Double): Bitmap =
@@ -273,7 +275,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
 
     val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
 
-    new Bitmap(newBuffer, newBounds)
+    internalCopy(newBuffer = newBuffer, newBounds = newBounds)
   end rotateByAroundOrigin
 
   /** Transforms the content of this bitmap using a specified [[AffineTransformation]]. This method
@@ -290,41 +292,41 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       resizeCanvasBasedOnTransformation = true
     )
 
-  /**
-   * Flips the bitmap content horizontally. This is equivalent to reflecting the image
-   * across a vertical axis running through the image's center.
-   *
-   * @return A new [[Bitmap]] instance with horizontally flipped content.
-   */
+  /** Flips the bitmap content horizontally. This is equivalent to reflecting the image across a
+    * vertical axis running through the image's center.
+    *
+    * @return
+    *   A new [[Bitmap]] instance with horizontally flipped content.
+    */
   def flipHorizontally: Bitmap =
     val newBuffer = transformContentUsing(
       AffineTransformation.forYAxisRelativeHorizontalFlipOf(buffer.width)
     )
-    new Bitmap(newBuffer, boundary)
+    internalCopy(newBuffer)
 
-  /**
-   * Flips the bitmap content vertically. This is equivalent to reflecting the image
-   * across a horizontal axis running through the image's center.
-   *
-   * @return A new [[Bitmap]] instance with vertically flipped content.
-   */
+  /** Flips the bitmap content vertically. This is equivalent to reflecting the image across a
+    * horizontal axis running through the image's center.
+    *
+    * @return
+    *   A new [[Bitmap]] instance with vertically flipped content.
+    */
   def flipVertically: Bitmap =
     val newBuffer = transformContentUsing(
       AffineTransformation.forXAxisRelativeVerticalFlipOf(buffer.height)
     )
-    new Bitmap(newBuffer, boundary)
+    internalCopy(newBuffer)
 
-  /**
-   * Flips the bitmap content diagonally. This is equivalent to rotating the image
-   * by 180 degrees around the point at the center of its bounds.
-   *
-   * @return A new [[Bitmap]] instance with diagonally flipped content.
-   */
+  /** Flips the bitmap content diagonally. This is equivalent to rotating the image by 180 degrees
+    * around the point at the center of its bounds.
+    *
+    * @return
+    *   A new [[Bitmap]] instance with diagonally flipped content.
+    */
   def flipDiagonally: Bitmap =
     val newBuffer = transformContentUsing(
       AffineTransformation.forOriginRelativeDiagonalFlipOf(buffer.width, buffer.height)
     )
-    new Bitmap(newBuffer, boundary)
+    internalCopy(newBuffer)
 
   override def crop(
       upperLeftXInPixels: Double,
@@ -348,20 +350,19 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     require(yMin >= 0, s"Y coordinate $yMin is negative")
     require(yMax <= buffer.height, s"Y coordinate $yMax is out of bounds")
 
-    val resultingWidth  = xMax - xMin + 1
-    val resultingHeight = yMax - yMin + 1
-    if resultingWidth < 1 || resultingHeight < 1 then return new Bitmap(0, 0)
+    val resultingWidth  = xMax - xMin
+    val resultingHeight = yMax - yMin
+    if resultingWidth < 1 || resultingHeight < 1 then return Bitmap.Empty
 
     val newBuffer = buffer.copyPortionXYXY(xMin, yMin, xMax, yMax)
 
-    val newUpperLeftCorner = Pos.Origin
-    val newLowerRightCorner =
-      newUpperLeftCorner + (newBuffer.width.doubleValue, newBuffer.height.doubleValue)
+    val newUpperLeftCorner  = Pos(xMin, yMin)
+    val newLowerRightCorner = Pos(xMax, yMax)
 
     val newBounds = Bounds(newUpperLeftCorner, newLowerRightCorner)
 
     // TODO: check if working
-    new Bitmap(newBuffer, newBounds)
+    internalCopy(newBuffer = newBuffer, newBounds = newBounds)
 
   /** Saves this bitmap as a PNG image to a specified path.
     *
@@ -372,3 +373,4 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     */
   def saveAsPngTo(path: String): Boolean =
     ResourceFactory.saveBufferedImageToPath(buffer.get, path)
+end Bitmap

@@ -55,16 +55,6 @@ class DrawingSurface(val owner: BufferAdapter):
       g.setColor(color.toAWTColor)
       g.fillRect(0, 0, owner.width, owner.height)
 
-  /** Draws a bitmap image on the surface.
-    *
-    * @param bitmap
-    *   The `BufferedImage` to draw.
-    * @return
-    *   A boolean indicating success.
-    */
-  def drawBitmap(bitmap: BufferedImage): Boolean =
-    drawBitmap(bitmap, 0.0, 0.0, MaximumOpacity)
-
   /** Draws a bitmap image with specified position and opacity.
     *
     * @param bitmap
@@ -192,7 +182,7 @@ class DrawingSurface(val owner: BufferAdapter):
         yOffsetToOrigin,
         xPosition + xCoordinates.head,
         yPosition + yCoordinates.head,
-        fillStyle.map(_.color).getOrElse(PresetColor.Transparent)
+        fillStyle.map(_.paint.averageColor).getOrElse(PresetColor.Transparent)
       )
     else
       val xOffset = xOffsetToOrigin + xPosition
@@ -206,7 +196,7 @@ class DrawingSurface(val owner: BufferAdapter):
         for i <- 0 until numberOfCoordinatesToDraw do
           if i == 0 then path.moveTo(xCoordinates(i), yCoordinates(i))
           else path.lineTo(xCoordinates(i), yCoordinates(i))
-        path.lineTo(xCoordinates.head, yCoordinates.head)
+        if numberOfCoordinatesToDraw != 2 then path.lineTo(xCoordinates.head, yCoordinates.head)
 
         draw(g, fillStyle, strokeStyle, path)
 
@@ -312,15 +302,24 @@ class DrawingSurface(val owner: BufferAdapter):
       strokeStyle: Option[StrokeStyle],
       shape: Shape
   ): Unit =
-    fillStyle match
-      case Some(style) =>
-        g.setColor(style.color.toAWTColor)
-        g.fill(shape)
-      case None =>
+    if strokeStyle.exists(_.onTop) then
+      fill()
+      stroke()
+    else
+      stroke()
+      fill()
 
-    strokeStyle match
-      case Some(style) =>
-        g.setStroke(style.toAWTStroke)
-        g.setColor(style.color.toAWTColor)
-        g.draw(shape)
-      case None =>
+    def fill(): Unit =
+      fillStyle match
+        case Some(style) =>
+          g.setPaint(style.paint.toAWTPaint)
+          g.fill(shape)
+        case None =>
+
+    def stroke(): Unit =
+      strokeStyle match
+        case Some(style) =>
+          g.setStroke(style.toAWTStroke)
+          g.setPaint(style.paint.toAWTPaint)
+          g.draw(shape)
+        case None =>

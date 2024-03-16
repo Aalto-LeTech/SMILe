@@ -4,7 +4,7 @@ import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
 import java.awt.Font
 
-/** Represents text as a graphical element.
+/** Represents a single line of text as a graphical element.
   *
   * @param pos
   *   The position of the text.
@@ -47,6 +47,7 @@ class Text(
       pos: Pos,
       customBounds: Option[Bounds],
       content: String,
+      typeface: String,
       size: Double,
       fillStyle: Option[FillStyle],
       strokeStyle: Option[StrokeStyle]
@@ -55,7 +56,7 @@ class Text(
       pos,
       customBounds,
       content,
-      new Font("Arial", Font.PLAIN, size.toInt),
+      new Font(typeface, Font.BOLD, size.toInt),
       fillStyle,
       strokeStyle
     )
@@ -125,8 +126,18 @@ class Text(
       )
     )
 
-  override def rotateBy(angle: Double, centerOfRotation: Pos): Text =
-    this // TODO: implement text rotation
+  /** Rasterizes the text and rotates it around a point.
+    *
+    * @return
+    *   A rotated bitmap.
+    */
+  override def rotateBy(angle: Double, centerOfRotation: Pos): Bitmap =
+    this.toBitmap.rotateBy(angle, centerOfRotation)
 
-  override def rotateByAroundOrigin(angle: Double): Text =
-    this
+  /** Rasterizes the text and rotates it around the origo.
+    *
+    * @return
+    *   A rotated bitmap.
+    */
+  override def rotateByAroundOrigin(angle: Double): Bitmap =
+    this.toBitmap.rotateByAroundOrigin(angle)

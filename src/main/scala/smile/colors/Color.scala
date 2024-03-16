@@ -2,7 +2,7 @@ package smile.colors
 
 import smile.infrastructure.Constants.*
 
-import java.awt.Color as LowLevelColor
+import java.awt
 
 /** Provides utility methods for creating and converting colors in various color spaces and formats,
   * including HSI (Hue, Saturation, Intensity) and RGBA (Red, Green, Blue, Alpha). It also supports
@@ -23,7 +23,8 @@ object Color:
     * @param intensity
     *   The intensity component of the color, in the range [0, 255].
     * @param opacity
-    *   The opacity of the color, in the range [0, 255]. Default is [[smile.infrastructure.Constants.MaximumOpacity]].
+    *   The opacity of the color, in the range [0, 255]. Default is
+    *   [[smile.infrastructure.Constants.MaximumOpacity]].
     * @return
     *   A new `Color` instance based on the specified HSI values and opacity.
     */
@@ -92,31 +93,31 @@ object Color:
   def hsiToRGB(hueInDegrees: Double, saturation: Double, intensity: Double): (Int, Int, Int) =
     validateHSI(hueInDegrees, saturation, intensity)
 
-    // Special case
-    if saturation == MinimumHSVSaturation then
-      val i: Int = Math.round(intensity).toInt
-      return (i, i, i)
+    // Normalize the hue to [0, 360)
+    val nHueInDeg = hueInDegrees % 360.0
 
-    val nHueInDeg = normalizedHSIHueInDegreesFrom(hueInDegrees)
+    // Convert intensity to a scale of 0 to 1 for calculations
+    val normalizedIntensity = intensity / 255.0
 
-    type OrderingFunction = (Int, Int, Int) => (Int, Int, Int)
-    
-    val (aThirdOfCircleHueInDegrees: Double, finalOrder: OrderingFunction) =
-      if nHueInDeg <= 120.0 then (nHueInDeg, (x: Int, y: Int, z: Int) => (x, z, y))
-      else if nHueInDeg <= 240.0 then (nHueInDeg - 120.0, (x: Int, y: Int, z: Int) => (y, x, z))
-      else (nHueInDeg - 240.0, (x: Int, y: Int, z: Int) => (z, y, x))
+    // Calculate the RGB values in the range [0, 1]
+    val C: Double = (1 - Math.abs(2 * normalizedIntensity - 1)) * saturation
+    val X: Double = C * (1 - Math.abs((nHueInDeg / 60.0) % 2 - 1))
+    val m: Double = normalizedIntensity - C / 2
 
-    val quotient =
-      (saturation * Math.toDegrees(Math.cos(Math.toRadians(aThirdOfCircleHueInDegrees)))) /
-        Math.toDegrees(Math.cos(Math.toRadians(60.0 - aThirdOfCircleHueInDegrees)))
-    val X = Math.round(intensity * (1 + quotient)).toInt
-    val Y = Math.round(intensity - intensity * saturation).toInt
-    val Z = Math.round(3.0 * intensity - X - Y).toInt
+    val (r1, g1, b1): (Double, Double, Double) =
+      if nHueInDeg < 60 then (C, X, 0.0)
+      else if nHueInDeg < 120 then (X, C, 0.0)
+      else if nHueInDeg < 180 then (0.0, C, X)
+      else if nHueInDeg < 240 then (0.0, X, C)
+      else if nHueInDeg < 300 then (X, 0.0, C)
+      else (C, 0.0, X)
 
-    val (red, green, blue) = finalOrder(X, Y, Z)
+    // Adjust the RGB values to the range [0, 255]
+    val red   = Math.round((r1 + m) * 255).toInt
+    val green = Math.round((g1 + m) * 255).toInt
+    val blue  = Math.round((b1 + m) * 255).toInt
 
     (red, green, blue)
-  end hsiToRGB
 
   /** Creates an ARGB integer value from RGBA components. Validates the RGBA components before
     * conversion.
@@ -128,19 +129,14 @@ object Color:
     * @param blue
     *   The blue component, in the range [0, 255].
     * @param opacity
-    *   The opacity component, in the range [0, 255]. Default is [[smile.infrastructure.Constants.MaximumOpacity]].
+    *   The opacity component, in the range [0, 255]. Default is
+    *   [[smile.infrastructure.Constants.MaximumOpacity]].
     * @return
     *   An integer representing the ARGB value.
     */
   def argbIntFrom(red: Int, green: Int, blue: Int, opacity: Int = MaximumOpacity): Int =
     validateRGBA(red, green, blue, opacity)
     (opacity << 24) | (red << 16) | (green << 8) | blue
-
-  private def normalizedHSIHueInDegreesFrom(hueCandidateInDegrees: Double): Double =
-    val modCircle = hueCandidateInDegrees % FullCircleInDegrees
-    if modCircle < 0 then FullCircleInDegrees + modCircle
-    else modCircle
-  end normalizedHSIHueInDegreesFrom
 
   /** Determines if the specified RGB color is a shade of gray. A color is considered gray if its
     * red, green, and blue components are equal.
@@ -160,11 +156,14 @@ object Color:
     * and blue components are all at their minimum value.
     *
     * @param red
-    *   The red component of the color, expected to be [[smile.infrastructure.Constants.MinimumRed]] for black.
+    *   The red component of the color, expected to be [[smile.infrastructure.Constants.MinimumRed]]
+    *   for black.
     * @param green
-    *   The green component of the color, expected to be [[smile.infrastructure.Constants.MinimumGreen]] for black.
+    *   The green component of the color, expected to be
+    *   [[smile.infrastructure.Constants.MinimumGreen]] for black.
     * @param blue
-    *   The blue component of the color, expected to be [[smile.infrastructure.Constants.MinimumBlue]] for black.
+    *   The blue component of the color, expected to be
+    *   [[smile.infrastructure.Constants.MinimumBlue]] for black.
     * @return
     *   `true` if the color is black, otherwise `false`.
     */
@@ -214,7 +213,8 @@ end Color
   * @param blue
   *   The blue component of the color, in the range [0, 255].
   * @param opacity
-  *   The opacity of the color, in the range [0, 255]. Defaults to [[smile.infrastructure.Constants.MaximumOpacity]].
+  *   The opacity of the color, in the range [0, 255]. Defaults to
+  *   [[smile.infrastructure.Constants.MaximumOpacity]].
   * @param canonicalName
   *   An optional canonical name for the color.
   */
@@ -224,7 +224,7 @@ class Color(
     val blue: Int,
     val opacity: Int = MaximumOpacity,
     val canonicalName: Option[String] = None
-):
+) extends Paint:
   Color.validateRGBA(red, green, blue, opacity)
 
   def this(red: Int, green: Int, blue: Int, opacity: Int, name: String) = this(
@@ -248,7 +248,8 @@ class Color(
   /** Checks if the color is fully opaque.
     *
     * @return
-    *   `true` if the opacity is equal to [[smile.infrastructure.Constants.MaximumOpacity]], otherwise `false`.
+    *   `true` if the opacity is equal to [[smile.infrastructure.Constants.MaximumOpacity]],
+    *   otherwise `false`.
     */
   def isOpaque: Boolean = opacity == MaximumOpacity
 
@@ -264,7 +265,11 @@ class Color(
     * @return
     *   A new `java.awt.Color` instance matching the RGB and opacity of this color.
     */
-  def toAWTColor: LowLevelColor = new LowLevelColor(red, green, blue, opacity)
+  def toAWTColor: awt.Color = new awt.Color(red, green, blue, opacity)
+
+  override lazy val toAWTPaint: awt.Paint = toAWTColor
+
+  override lazy val averageColor: Color = this
 
   /** Converts the color to an ARGB integer.
     *

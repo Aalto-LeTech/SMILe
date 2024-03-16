@@ -37,6 +37,7 @@ class Arc(
   override lazy val position: Pos = pos
 
   private lazy val corners: Seq[Pos] =
+    // TODO strokeRadius
     val halfWidth  = width / 2.0
     val halfHeight = height / 2.0
 

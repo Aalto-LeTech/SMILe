@@ -1,5 +1,6 @@
 package smile.pictures
 
+import smile.Settings.DefaultPosition
 import smile.modeling.Pos
 
 /** Factory object for creating rectangles.
@@ -22,7 +23,7 @@ object Rectangle:
       fillStyle: Option[FillStyle],
       strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(sideLength, Pos.Origin, fillStyle, strokeStyle)
+    apply(sideLength, DefaultPosition, fillStyle, strokeStyle)
 
   /** Creates a square with a given side length, center position, fill style, and stroke style.
     *
@@ -71,7 +72,7 @@ object Rectangle:
       fillStyle: Option[FillStyle],
       strokeStyle: Option[StrokeStyle]
   ): VectorGraphic =
-    apply(baseLength, height, Pos.Origin, fillStyle, strokeStyle)
+    apply(baseLength, height, DefaultPosition, fillStyle, strokeStyle)
 
   /** Creates a rectangle with a given base length, height, center position, fill style, and stroke
     * style.

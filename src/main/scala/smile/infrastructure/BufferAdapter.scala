@@ -10,6 +10,9 @@ import java.awt.geom.{AffineTransform, Rectangle2D}
 import java.awt.image.{AffineTransformOp, BufferedImage}
 import javax.swing.Icon
 
+object BufferAdapter:
+  val Empty: BufferAdapter = BufferAdapter(1, 1)
+
 /** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
   * image processing tasks such as copying, scaling, and transforming.
   *
@@ -33,10 +36,10 @@ class BufferAdapter(private val buffer: BufferedImage):
   lazy val height: Int = buffer.getHeight
 
   /** Scaling method used for image scaling operations. */
-  val ScalingMethod: Int = Image.SCALE_AREA_AVERAGING
+  private def ScalingMethod: Int = Settings.BufferScalingMethod.value
 
   /** Transformation method used for image transformation operations. */
-  val TransformMethod: Int = AffineTransformOp.TYPE_BICUBIC
+  private def TransformMethod: Int = Settings.BufferTransformMethod.value
 
   /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
     * new one.
@@ -46,7 +49,7 @@ class BufferAdapter(private val buffer: BufferedImage):
     */
 
   def deepCopy: BufferAdapter =
-    val newBuffer = new BufferAdapter(width, height)
+    val newBuffer = BufferAdapter(width, height)
     newBuffer.withGraphics2D(g => g.drawImage(buffer, 0, 0, null))
     newBuffer
 
@@ -63,7 +66,7 @@ class BufferAdapter(private val buffer: BufferedImage):
     *   The `Graphics` instance for the underlying `BufferedImage`.
     */
 
-  def graphics: Graphics = buffer.getGraphics
+  def graphics: Graphics2D = buffer.createGraphics()
 
   /** Converts the buffer into a Swing `Icon`.
     *
@@ -104,15 +107,18 @@ class BufferAdapter(private val buffer: BufferedImage):
     * @return
     *   A new `BufferAdapter` instance containing the scaled image.
     */
-  def scaleTo(targetWidth: Double, targetHeight: Double): BufferAdapter =
+  def scaleTo(
+      targetWidth: Double,
+      targetHeight: Double
+  ): BufferAdapter =
+    val isNearestNeighbor = Settings.BufferScalingMethod == Settings.ScalingMethod.NearestNeighbor
+
     val newWidth  = targetWidth.toInt.abs
     val newHeight = targetHeight.toInt.abs
 
-    val image = buffer.getScaledInstance(newWidth, newHeight, ScalingMethod)
+    val newBuffer = BufferAdapter(newWidth, newHeight)
 
-    val newBuffer = new BufferAdapter(newWidth, newHeight)
-
-    val g = newBuffer.buffer.createGraphics()
+    val g = newBuffer.graphics
 
     // Flip the image if necessary.
     if targetWidth < 0 || targetHeight < 0 then
@@ -124,7 +130,15 @@ class BufferAdapter(private val buffer: BufferedImage):
       if targetHeight < 0 then tx.translate(0, -newHeight)
       g.setTransform(tx)
 
-    g.drawImage(image, 0, 0, null)
+    if isNearestNeighbor then
+      g.setRenderingHint(
+        RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+      )
+      g.drawImage(this.buffer, 0, 0, newWidth, newHeight, null)
+    else
+      val image = this.buffer.getScaledInstance(newWidth, newHeight, ScalingMethod)
+      g.drawImage(image, 0, 0, null)
     g.dispose()
 
     newBuffer
@@ -213,6 +227,7 @@ class BufferAdapter(private val buffer: BufferedImage):
       width: Double,
       height: Double
   ): BufferAdapter =
+    if width <= 0 || height <= 0 then return BufferAdapter.Empty
 
     val flooredWidth: Int  = width.floor.toInt
     val flooredHeight: Int = height.floor.toInt
@@ -225,37 +240,7 @@ class BufferAdapter(private val buffer: BufferedImage):
         flooredHeight
       )
 
-    val initializer = (g: Graphics2D) => g.drawImage(sourceBufferArea, null, 0, 0)
-
-    val newBuffer = createNormalizedLowLevelBitmapBufferOf(
-      flooredWidth,
-      flooredHeight,
-      Some(initializer)
-    )
-
-    newBuffer
-
-  private def createNormalizedLowLevelBitmapBufferOf(
-      width: Int,
-      height: Int,
-      initializer: Option[Graphics2D => Unit]
-  ): BufferAdapter =
-
-    val newBuffer = new BufferAdapter(
-      width,
-      height
-    )
-
-    newBuffer.withGraphics2D(g =>
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC))
-      g.setColor(DefaultBackgroundColor.toAWTColor)
-      g.fillRect(0, 0, width, height)
-
-      initializer.foreach(i => i(g))
-    )
-
-    newBuffer
-  end createNormalizedLowLevelBitmapBufferOf
+    new BufferAdapter(sourceBufferArea)
 
   def withGraphics2D[ResultType](
       workUnit: Graphics2D => ResultType
@@ -296,15 +281,6 @@ class BufferAdapter(private val buffer: BufferedImage):
     g.setRenderingHint(
       RenderingHints.KEY_TEXT_ANTIALIASING,
       textAntialiasingState
-    )
-
-    g.setRenderingHint(
-      RenderingHints.KEY_ALPHA_INTERPOLATION,
-      RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY
-    )
-    g.setRenderingHint(
-      RenderingHints.KEY_RENDERING,
-      RenderingHints.VALUE_RENDER_QUALITY
     )
   end setDefaultGraphics2DProperties
 
@@ -376,11 +352,12 @@ class BufferAdapter(private val buffer: BufferedImage):
 
     val finalTransformOperation =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
-    val resultingBuffer = BufferAdapter(resultingImageWidth, resultingImageHeight)
 
-    new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
-
-    finalTransformOperation.filter(buffer, resultingBuffer.get)
-
-    resultingBuffer
+    if resultingImageWidth == 0 || resultingImageHeight == 0 then BufferAdapter.Empty
+    else
+      val resultingBuffer = BufferAdapter(resultingImageWidth, resultingImageHeight)
+      new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
+      finalTransformOperation.filter(buffer, resultingBuffer.get)
+      resultingBuffer
   end createTransformedVersionWith
+end BufferAdapter
