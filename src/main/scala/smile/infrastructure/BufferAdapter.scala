@@ -1,13 +1,15 @@
 package smile.infrastructure
 
 import smile.Settings
-import smile.Settings.{CanvasesAreResizedBasedOnTransformations, DefaultBackgroundColor}
+import smile.Settings.DefaultBackgroundColor
 import smile.colors.Color
 import smile.modeling.AffineTransformation
 
 import java.awt.*
 import java.awt.geom.{AffineTransform, Rectangle2D}
 import java.awt.image.{AffineTransformOp, BufferedImage}
+import java.io.File
+import javax.imageio.ImageIO
 import javax.swing.Icon
 
 object BufferAdapter:
@@ -60,14 +62,6 @@ class BufferAdapter(private val buffer: BufferedImage):
     */
   def get: BufferedImage = buffer
 
-  /** Provides access to the graphics context of the underlying `BufferedImage`.
-    *
-    * @return
-    *   The `Graphics` instance for the underlying `BufferedImage`.
-    */
-
-  def graphics: Graphics2D = buffer.createGraphics()
-
   /** Converts the buffer into a Swing `Icon`.
     *
     * @return
@@ -90,13 +84,8 @@ class BufferAdapter(private val buffer: BufferedImage):
     *   The `Color` of the pixel at the specified coordinates.
     */
   def pixelColor(x: Int, y: Int): Color =
-    val rgba = buffer.getRGB(x, y)
-    new Color(
-      red = rgba >> 16 & 0xff,
-      green = rgba >> 8 & 0xff,
-      blue = rgba & 0xff,
-      opacity = rgba >> 24 & 0xff
-    )
+    val argb = buffer.getRGB(x, y)
+    new Color(argb)
 
   /** Scales the image to a target width and height.
     *
@@ -118,7 +107,7 @@ class BufferAdapter(private val buffer: BufferedImage):
 
     val newBuffer = BufferAdapter(newWidth, newHeight)
 
-    val g = newBuffer.graphics
+    val g = newBuffer.buffer.createGraphics()
 
     // Flip the image if necessary.
     if targetWidth < 0 || targetHeight < 0 then
@@ -128,7 +117,7 @@ class BufferAdapter(private val buffer: BufferedImage):
       )
       if targetWidth < 0 then tx.translate(-newWidth, 0)
       if targetHeight < 0 then tx.translate(0, -newHeight)
-      g.setTransform(tx)
+      g.transform(tx)
 
     if isNearestNeighbor then
       g.setRenderingHint(
@@ -147,7 +136,8 @@ class BufferAdapter(private val buffer: BufferedImage):
   /** Sets the colors of the image from a sequence of `Color` objects.
     *
     * @param colors
-    *   A sequence of `Color` objects to be applied to the image.
+    *   A sequence of `Color` objects to be applied to the image. The sequence must have exactly
+    *   width * height items.
     */
   def setColorsFromSeq(
       colors: Seq[Color]
@@ -178,35 +168,30 @@ class BufferAdapter(private val buffer: BufferedImage):
 
   /** Copies a portion of the image defined by two corners: top-left and bottom-right.
     *
-    * @param topLeftX
+    * @param left
     *   X-coordinate of the top-left corner.
-    * @param topLeftY
+    * @param top
     *   Y-coordinate of the top-left corner.
-    * @param bottomRightX
+    * @param right
     *   X-coordinate of the bottom-right corner.
-    * @param bottomRightY
+    * @param bottom
     *   Y-coordinate of the bottom-right corner.
     * @return
     *   A new `BufferAdapter` instance containing the copied portion of the image.
     */
   def copyPortionXYXY(
-      topLeftX: Double,
-      topLeftY: Double,
-      bottomRightX: Double,
-      bottomRightY: Double
+      left: Double,
+      top: Double,
+      right: Double,
+      bottom: Double
   ): BufferAdapter =
-    val (x0, x1) =
-      if topLeftX > bottomRightX then (bottomRightX, topLeftX)
-      else (topLeftX, bottomRightX)
-
-    val (y0, y1) =
-      if topLeftY > bottomRightY then (bottomRightY, topLeftY)
-      else (topLeftY, bottomRightY)
+    val (x0, x1) = if left > right then (right, left) else (left, right)
+    val (y0, y1) = if top > bottom then (bottom, top) else (top, bottom)
 
     val width  = x1 - x0
     val height = y1 - y0
 
-    copyPortionXYWH(topLeftX, topLeftY, width, height)
+    copyPortionXYWH(left, top, width, height)
 
   /** Copies a portion of the image defined by a top-left corner and dimensions.
     *
@@ -242,7 +227,7 @@ class BufferAdapter(private val buffer: BufferedImage):
 
     new BufferAdapter(sourceBufferArea)
 
-  def withGraphics2D[ResultType](
+  private[infrastructure] def withGraphics2D[ResultType](
       workUnit: Graphics2D => ResultType
   ): ResultType =
 
@@ -284,28 +269,12 @@ class BufferAdapter(private val buffer: BufferedImage):
     )
   end setDefaultGraphics2DProperties
 
-  /** Iterates over all pixel locations in the buffer, invoking a callback function for each pixel
-    * coordinate.
-    *
-    * @param callback
-    *   A function that takes two integers (x and y coordinates) and returns Unit. It is called for
-    *   each pixel.
-    */
-  def iterateLocations(callback: (Int, Int) => Unit): Unit =
-    for
-      x <- 0 until width
-      y <- 0 until height
-    do callback(x, y)
-
   /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
     * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
     * resized based on the transformation.
     *
     * @param transformation
     *   The `AffineTransformation` to apply to the image.
-    * @param resizeCanvasBasedOnTransformation
-    *   A boolean indicating whether the canvas should be resized based on the transformation.
-    *   Defaults to the value of `CanvasesAreResizedBasedOnTransformations` from `Settings`.
     * @param backgroundColor
     *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
     *   `DefaultBackgroundColor`.
@@ -314,7 +283,6 @@ class BufferAdapter(private val buffer: BufferedImage):
     */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
-      resizeCanvasBasedOnTransformation: Boolean = CanvasesAreResizedBasedOnTransformations,
       backgroundColor: Color = DefaultBackgroundColor
   ): BufferAdapter =
 
@@ -326,29 +294,23 @@ class BufferAdapter(private val buffer: BufferedImage):
         .getBounds2D(buffer)
 
     val (offsetLeft, offsetTop, offsetRight, offsetBottom) =
-      if !resizeCanvasBasedOnTransformation then (0.0, 0.0, 0.0, 0.0)
-      else
-        (
-          -transformedContentBoundaries.getMinX,
-          -transformedContentBoundaries.getMinY,
-          transformedContentBoundaries.getMaxX - width,
-          transformedContentBoundaries.getMaxY - height
-        )
+      (
+        -transformedContentBoundaries.getMinX,
+        -transformedContentBoundaries.getMinY,
+        transformedContentBoundaries.getMaxX - width,
+        transformedContentBoundaries.getMaxY - height
+      )
 
     val (resultingImageWidth, resultingImageHeight) =
-      if !resizeCanvasBasedOnTransformation then (width, height)
-      else
-        (
-          Math.floor(width.toDouble + offsetLeft + offsetRight).toInt,
-          Math.floor(height.toDouble + offsetTop + offsetBottom).toInt
-        )
+      (
+        Math.floor(width.toDouble + offsetLeft + offsetRight).toInt,
+        Math.floor(height.toDouble + offsetTop + offsetBottom).toInt
+      )
 
-    if resizeCanvasBasedOnTransformation then
-      if offsetTop > 0 || offsetLeft > 0 then
-        val translationToBringTheRotatedBitmapFullyVisible =
-          AffineTransform.getTranslateInstance(offsetLeft, offsetTop)
-
-        lowLevelTransformation.preConcatenate(translationToBringTheRotatedBitmapFullyVisible)
+    if offsetTop > 0 || offsetLeft > 0 then
+      val translationToBringTheRotatedBitmapFullyVisible =
+        AffineTransform.getTranslateInstance(offsetLeft, offsetTop)
+      lowLevelTransformation.preConcatenate(translationToBringTheRotatedBitmapFullyVisible)
 
     val finalTransformOperation =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
@@ -360,4 +322,14 @@ class BufferAdapter(private val buffer: BufferedImage):
       finalTransformOperation.filter(buffer, resultingBuffer.get)
       resultingBuffer
   end createTransformedVersionWith
+
+  /** Saves a `BufferedImage` to a specified path. The image is saved in PNG format.
+    *
+    * @param path
+    *   The filesystem path where the image should be saved.
+    * @return
+    *   `true` if the image was saved successfully, `false` otherwise.
+    */
+  def saveToPath(path: String): Boolean =
+    ImageIO.write(buffer, "png", new File(path))
 end BufferAdapter

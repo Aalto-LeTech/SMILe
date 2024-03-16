@@ -106,17 +106,5 @@ object ResourceFactory:
     */
   private def bufferFromImage(image: BufferedImage): BufferAdapter =
     val bufferedImage = BufferAdapter(image.getWidth, image.getHeight)
-    bufferedImage.graphics.drawImage(image, 0, 0, null)
+    bufferedImage.get.createGraphics().drawImage(image, 0, 0, null)
     bufferedImage
-
-  /** Saves a `BufferedImage` to a specified path. The image is saved in PNG format.
-    *
-    * @param image
-    *   The `BufferedImage` to save.
-    * @param path
-    *   The filesystem path where the image should be saved.
-    * @return
-    *   `true` if the image was saved successfully, `false` otherwise.
-    */
-  def saveBufferedImageToPath(image: BufferedImage, path: String): Boolean =
-    ImageIO.write(image, "png", new File(path))

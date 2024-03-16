@@ -163,13 +163,16 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     val resultHeight = buffer.height.min(another.buffer.height)
 
     val result       = new Bitmap(resultWidth, resultHeight)
-    val resultBuffer = result.buffer
-    resultBuffer.iterateLocations: (x, y) =>
+    val resultBuffer = result.buffer.get
+    for
+      x <- 0 until resultWidth
+      y <- 0 until resultHeight
+    do
       val firstColor  = this.getColor(x, y)
       val secondColor = another.getColor(x, y)
 
       val newColor = pixelMerger(firstColor, secondColor)
-      resultBuffer.get.setRGB(x, y, newColor.toARGBInt)
+      resultBuffer.setRGB(x, y, newColor.toARGBInt)
 
     result
   end mergeWith
@@ -183,10 +186,14 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   The `Bitmap` instance with updated colors.
     */
   def setColorsByLocation(generator: (Int, Int) => Color): Bitmap =
-    val result = deepCopy()
-    result.buffer.iterateLocations: (x, y) =>
+    val result       = deepCopy()
+    val resultBuffer = result.buffer.get
+    for
+      x <- 0 until buffer.width
+      y <- 0 until buffer.height
+    do
       val color = generator(x, y)
-      result.buffer.get.setRGB(x, y, color.toARGBInt)
+      resultBuffer.setRGB(x, y, color.toARGBInt)
     result
 
   /** Transforms each pixel color of this bitmap using a specified color transformer function.
@@ -197,11 +204,14 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   A new `Bitmap` instance with transformed colors.
     */
   def transformColorToColor(transformer: Color => Color): Bitmap =
-    val result = new Bitmap(buffer.width, buffer.height)
-    result.buffer.iterateLocations: (x, y) =>
+    val result       = new Bitmap(buffer.width, buffer.height)
+    val resultBuffer = result.buffer.get
+    for
+      x <- 0 until buffer.width
+      y <- 0 until buffer.height
+    do
       val color = this.getColor(x, y)
-      result.buffer.get.setRGB(x, y, transformer(color).toARGBInt)
-
+      resultBuffer.setRGB(x, y, transformer(color).toARGBInt)
     result
   end transformColorToColor
 
@@ -287,10 +297,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   A new [[BufferAdapter]] containing the transformed pixel data.
     */
   private def transformContentUsing(transformation: AffineTransformation): BufferAdapter =
-    buffer.createTransformedVersionWith(
-      transformation = transformation,
-      resizeCanvasBasedOnTransformation = true
-    )
+    buffer.createTransformedVersionWith(transformation = transformation)
 
   /** Flips the bitmap content horizontally. This is equivalent to reflecting the image across a
     * vertical axis running through the image's center.
@@ -372,5 +379,5 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   `true` if the save operation was successful, `false` otherwise.
     */
   def saveAsPngTo(path: String): Boolean =
-    ResourceFactory.saveBufferedImageToPath(buffer.get, path)
+    buffer.saveToPath(path)
 end Bitmap

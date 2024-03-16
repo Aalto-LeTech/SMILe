@@ -9,7 +9,7 @@ package smile.colors
   * @param canonicalName
   *   The canonical name for the color.
   */
-class PresetColor(argbInt: Int, canonicalName: String) extends Color(argbInt, Some(canonicalName)):
+class PresetColor(argbInt: Int, val canonicalName: String) extends Color(argbInt):
 
   /** Auxiliary constructor for creating a `PresetColor` from an existing `Color` instance and a
     * canonical name. This constructor facilitates the easy labeling of colors with descriptive

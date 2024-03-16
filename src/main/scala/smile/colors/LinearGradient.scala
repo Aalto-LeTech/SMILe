@@ -88,4 +88,4 @@ class LinearGradient(
     val g = colors.map(_.green).sum / colors.size
     val b = colors.map(_.blue).sum / colors.size
     val a = colors.map(_.opacity).sum / colors.size
-    Color(r, g, b, a, None)
+    Color(r, g, b, a)

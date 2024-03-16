@@ -21,9 +21,7 @@ object BoundaryCalculator:
     if elements.isEmpty then NullBounds
     else
       val bounds = elements.map(_.boundary)
-      val xs     = bounds.flatMap(b => Seq(b.upperLeftCorner.x, b.lowerRightCorner.x))
-      val ys     = bounds.flatMap(b => Seq(b.upperLeftCorner.y, b.lowerRightCorner.y))
-      Bounds(xs.min, ys.min, xs.max, ys.max)
+      fromPositions(bounds.flatMap(b => Seq(b.upperLeftCorner, b.lowerRightCorner)))
   end fromBoundaries
 
   /** Calculates the bounding box from a sequence of positions.

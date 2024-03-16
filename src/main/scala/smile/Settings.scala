@@ -34,7 +34,6 @@ object Settings:
   var DrawingIsAntiAliased: Boolean                     = true
   var BufferScalingMethod: ScalingMethod                = ScalingMethod.Smooth
   var BufferTransformMethod: TransformMethod            = TransformMethod.Bilinear
-  var CanvasesAreResizedBasedOnTransformations: Boolean = true
   var DefaultPaddingInPixels: Double                    = 0
   var DefaultBackgroundColor: Color                     = Transparent
   var DefaultPositionType: PositionType                 = PositionType.Center

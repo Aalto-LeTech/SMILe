@@ -59,13 +59,13 @@ object Color:
       if isGray(red, green, blue) then // Not defined for grays
         UndefinedHSIHue
       else
-        val RedMinusGreen = red - green
-        val RedMinusBlue  = red - blue
+        val redMinusGreen = red - green
+        val redMinusBlue  = red - blue
 
-        val root = Math.sqrt(RedMinusGreen * RedMinusGreen + RedMinusBlue * (green - blue))
+        val root = Math.sqrt(redMinusGreen * redMinusGreen + redMinusBlue * (green - blue))
 
         val angleCandidate = Math
-          .toDegrees(Math.acos((RedMinusGreen + RedMinusBlue) / (2.0 * root)))
+          .toDegrees(Math.acos((redMinusGreen + redMinusBlue) / (2.0 * root)))
 
         if green >= blue then angleCandidate
         else FullCircleInDegrees - angleCandidate
@@ -138,6 +138,10 @@ object Color:
     validateRGBA(red, green, blue, opacity)
     (opacity << 24) | (red << 16) | (green << 8) | blue
 
+  def rgbaIntFrom(red: Int, green: Int, blue: Int, opacity: Int = MaximumOpacity): Int =
+    validateRGBA(red, green, blue, opacity)
+    (red << 24) | (green << 16) | (blue << 8) | opacity
+
   /** Determines if the specified RGB color is a shade of gray. A color is considered gray if its
     * red, green, and blue components are equal.
     *
@@ -173,12 +177,21 @@ object Color:
   private def min(red: Int, green: Int, blue: Int): Int = red.min(green).min(blue)
 
   private def validateRGBA(red: Int, green: Int, blue: Int, opacity: Int = 255): Unit =
-    require(red >= MinimumRed && red <= MaximumRed, "Red must be between 0 and 255")
-    require(green >= MinimumGreen && green <= MaximumGreen, "Green must be between 0 and 255")
-    require(blue >= MinimumBlue && blue <= MaximumBlue, "Blue must be between 0 and 255")
+    require(
+      red >= MinimumRed && red <= MaximumRed,
+      s"Red must be between $MinimumRed and $MaximumRed"
+    )
+    require(
+      green >= MinimumGreen && green <= MaximumGreen,
+      s"Green must be between $MinimumGreen and $MaximumGreen"
+    )
+    require(
+      blue >= MinimumBlue && blue <= MaximumBlue,
+      s"Blue must be between $MinimumBlue and $MaximumBlue"
+    )
     require(
       opacity >= MinimumOpacity && opacity <= MaximumOpacity,
-      "Opacity must be between 0 and 255"
+      s"Opacity must be between $MinimumOpacity and $MaximumOpacity"
     )
 
   private def validateHSI(
@@ -187,18 +200,21 @@ object Color:
       intensity: Double,
       opacity: Int = 255
   ): Unit =
-    require(hue >= MinimumHSIHue && hue <= MaximumHSIHue, "Hue must be between 0 and 360")
+    require(
+      hue >= MinimumHSIHue && hue <= MaximumHSIHue,
+      s"Hue must be between $MinimumHSIHue and $MaximumHSIHue"
+    )
     require(
       saturation >= MinimumHSISaturation && saturation <= MaximumHSISaturation,
-      "Saturation must be between 0 and 1"
+      s"Saturation must be between $MinimumHSISaturation and $MaximumHSISaturation"
     )
     require(
       intensity >= MinimumHSIIntensity && intensity <= MaximumHSIIntensity,
-      "Intensity must be between 0 and 255"
+      s"Intensity must be between $MinimumHSIIntensity and $MaximumHSIIntensity"
     )
     require(
       opacity >= MinimumOpacity && opacity <= MaximumOpacity,
-      "Opacity must be between 0 and 255"
+      s"Opacity must be between $MinimumOpacity and $MaximumOpacity"
     )
 
 end Color
@@ -215,35 +231,21 @@ end Color
   * @param opacity
   *   The opacity of the color, in the range [0, 255]. Defaults to
   *   [[smile.infrastructure.Constants.MaximumOpacity]].
-  * @param canonicalName
-  *   An optional canonical name for the color.
   */
-class Color(
-    val red: Int,
-    val green: Int,
-    val blue: Int,
-    val opacity: Int = MaximumOpacity,
-    val canonicalName: Option[String] = None
+case class Color(
+    red: Int,
+    green: Int,
+    blue: Int,
+    opacity: Int = MaximumOpacity
 ) extends Paint:
   Color.validateRGBA(red, green, blue, opacity)
 
-  def this(red: Int, green: Int, blue: Int, opacity: Int, name: String) = this(
-    red,
-    green,
-    blue,
-    opacity,
-    Some(name)
-  )
-
-  def this(argb: Int, canonicalName: Option[String]) = this(
+  def this(argb: Int) = this(
     (argb >> 16) & 0xff,
     (argb >> 8) & 0xff,
     argb & 0xff,
-    (argb >> 24) & 0xff,
-    canonicalName
+    (argb >> 24) & 0xff
   )
-
-  def this(argb: Int) = this(argb, None)
 
   /** Checks if the color is fully opaque.
     *
@@ -277,6 +279,15 @@ class Color(
     *   An integer representing the ARGB value of the color.
     */
   def toARGBInt: Int = Color.argbIntFrom(red, green, blue, opacity)
+
+  /** Converts the color to an RGBA integer.
+    *
+    * @return
+    *   An integer representing the RGBA value of the color.
+    */
+  def toRGBAInt: Int = Color.rgbaIntFrom(red, green, blue, opacity)
+
+  private def toRGBInt: Int = (red << 16) | (green << 8) | blue
 
   /** Lightens the color by a default factor.
     *
@@ -358,3 +369,7 @@ class Color(
 
     shadeByFactor(shadingFactorInPercents / 100.0)
   end shadeByPercentage
+
+  override def toString: String =
+    if opacity == MaximumOpacity then f"#$toRGBInt%06X"
+    else f"#$toRGBAInt%08X"
