@@ -2,8 +2,6 @@ package smile.colors
 
 import smile.infrastructure.Constants.*
 
-import java.awt
-
 /** Provides utility methods for creating and converting colors in various color spaces and formats,
   * including HSI (Hue, Saturation, Intensity) and RGBA (Red, Green, Blue, Alpha). It also supports
   * operations to lighten or darken colors.
@@ -142,6 +140,13 @@ object Color:
     validateRGBA(red, green, blue, opacity)
     (red << 24) | (green << 16) | (blue << 8) | opacity
 
+  def fromRgbaInt(rgba: Int): Color = new Color(
+    (rgba >> 24) & 0xff,
+    (rgba >> 16) & 0xff,
+    (rgba >> 8) & 0xff,
+    rgba & 0xff
+  )
+
   /** Determines if the specified RGB color is a shade of gray. A color is considered gray if its
     * red, green, and blue components are equal.
     *
@@ -261,15 +266,6 @@ case class Color(
     *   A tuple containing the HSI components of the color.
     */
   def toHSI: (Double, Double, Double) = Color.rgbToHSI(red, green, blue)
-
-  /** Converts the color to a `java.awt.Color` instance.
-    *
-    * @return
-    *   A new `java.awt.Color` instance matching the RGB and opacity of this color.
-    */
-  def toAWTColor: awt.Color = new awt.Color(red, green, blue, opacity)
-
-  override lazy val toAWTPaint: awt.Paint = toAWTColor
 
   override lazy val averageColor: Color = this
 

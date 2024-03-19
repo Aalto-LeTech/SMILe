@@ -21,7 +21,7 @@ object BufferAdapter:
   * @param buffer
   *   The underlying `BufferedImage` instance.
   */
-class BufferAdapter(private val buffer: BufferedImage):
+class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbstract:
 
   /** Creates a `BufferAdapter` instance with specified width and height, initializing a new
     * `BufferedImage`.
@@ -34,8 +34,8 @@ class BufferAdapter(private val buffer: BufferedImage):
   def this(width: Int, height: Int) =
     this(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB))
 
-  lazy val width: Int  = buffer.getWidth
-  lazy val height: Int = buffer.getHeight
+  val width: Int  = buffer.getWidth
+  val height: Int = buffer.getHeight
 
   /** Scaling method used for image scaling operations. */
   private def ScalingMethod: Int = Settings.BufferScalingMethod.value
@@ -43,13 +43,26 @@ class BufferAdapter(private val buffer: BufferedImage):
   /** Transformation method used for image transformation operations. */
   private def TransformMethod: Int = Settings.BufferTransformMethod.value
 
+  private def transformationToAWT(affineTransformation: AffineTransformation): AffineTransform =
+    val awtTransform = new AffineTransform()
+
+    awtTransform.setTransform(
+      affineTransformation.alpha,
+      affineTransformation.delta,
+      affineTransformation.gamma,
+      affineTransformation.beta,
+      affineTransformation.tauX,
+      affineTransformation.tauY
+    )
+
+    awtTransform
+
   /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
     * new one.
     *
     * @return
     *   A new `BufferAdapter` instance that is a copy of the current one.
     */
-
   def deepCopy: BufferAdapter =
     val newBuffer = BufferAdapter(width, height)
     newBuffer.withGraphics2D(g => g.drawImage(buffer, 0, 0, null))
@@ -61,6 +74,22 @@ class BufferAdapter(private val buffer: BufferedImage):
     *   The underlying `BufferedImage`.
     */
   def get: BufferedImage = buffer
+
+  def imageData: Seq[Color] = 
+    val raster = buffer.getRaster
+    val (red, green, blue, alpha) = (0, 1, 2, 3)
+    val colors = for
+      y <- 0 until height
+      x <- 0 until width
+    yield
+      val pixel = raster.getPixel(x, y, Array.ofDim[Int](4))
+      Color(
+        pixel(red),
+        pixel(green),
+        pixel(blue),
+        pixel(alpha)
+      )
+    colors
 
   /** Converts the buffer into a Swing `Icon`.
     *
@@ -86,6 +115,9 @@ class BufferAdapter(private val buffer: BufferedImage):
   def pixelColor(x: Int, y: Int): Color =
     val argb = buffer.getRGB(x, y)
     new Color(argb)
+
+  def setRGBA(x: Int, y: Int, color: Color): Unit =
+    buffer.setRGB(x, y, color.toARGBInt)
 
   /** Scales the image to a target width and height.
     *
@@ -166,33 +198,6 @@ class BufferAdapter(private val buffer: BufferedImage):
     buffer.setData(raster)
   end setColorsFromSeq
 
-  /** Copies a portion of the image defined by two corners: top-left and bottom-right.
-    *
-    * @param left
-    *   X-coordinate of the top-left corner.
-    * @param top
-    *   Y-coordinate of the top-left corner.
-    * @param right
-    *   X-coordinate of the bottom-right corner.
-    * @param bottom
-    *   Y-coordinate of the bottom-right corner.
-    * @return
-    *   A new `BufferAdapter` instance containing the copied portion of the image.
-    */
-  def copyPortionXYXY(
-      left: Double,
-      top: Double,
-      right: Double,
-      bottom: Double
-  ): BufferAdapter =
-    val (x0, x1) = if left > right then (right, left) else (left, right)
-    val (y0, y1) = if top > bottom then (bottom, top) else (top, bottom)
-
-    val width  = x1 - x0
-    val height = y1 - y0
-
-    copyPortionXYWH(left, top, width, height)
-
   /** Copies a portion of the image defined by a top-left corner and dimensions.
     *
     * @param topLeftX
@@ -226,6 +231,7 @@ class BufferAdapter(private val buffer: BufferedImage):
       )
 
     new BufferAdapter(sourceBufferArea)
+  end copyPortionXYWH
 
   private[infrastructure] def withGraphics2D[ResultType](
       workUnit: Graphics2D => ResultType
@@ -288,7 +294,7 @@ class BufferAdapter(private val buffer: BufferedImage):
 
     val globalInterpolationMethod = TransformMethod
 
-    val lowLevelTransformation = transformation.toAWTAffineTransform
+    val lowLevelTransformation = transformationToAWT(transformation)
     val transformedContentBoundaries: Rectangle2D =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
         .getBounds2D(buffer)

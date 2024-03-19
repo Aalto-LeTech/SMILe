@@ -2,18 +2,23 @@ package smile.colors
 
 import smile.modeling.Pos
 
-import java.awt
-
 object LinearGradient:
   /** Defines the cycle methods available for a `LinearGradient`.
-   *
-   * These cycle methods determine how the gradient pattern repeats (or doesn't) beyond its defined start and end points.
-   */
+    *
+    * These cycle methods determine how the gradient pattern repeats (or doesn't) beyond its defined
+    * start and end points.
+    */
   enum CycleMethod:
-    /** The gradient does not repeat; it will display the terminal colors beyond the start and end points. */
+    /** The gradient does not repeat; it will display the terminal colors beyond the start and end
+      * points.
+      */
     case NO_CYCLE
-    /** The gradient pattern repeats by mirroring the gradient along the axis perpendicular to the gradient's start and end points. */
+
+    /** The gradient pattern repeats by mirroring the gradient along the axis perpendicular to the
+      * gradient's start and end points.
+      */
     case REFLECT
+
     /** The gradient pattern repeats by cycling the colors from start to end. */
     case REPEAT
 
@@ -58,21 +63,6 @@ class LinearGradient(
       Seq(0.0f, 1.0f),
       Seq(startColor, endColor),
       cycleMethod
-    )
-
-  lazy val toAWTPaint: awt.Paint =
-    new java.awt.LinearGradientPaint(
-      start.x.toFloat,
-      start.y.toFloat,
-      end.x.toFloat,
-      end.y.toFloat,
-      fractions.toArray,
-      colors.map(_.toAWTColor).toArray,
-      cycleMethod match
-        case LinearGradient.CycleMethod.NO_CYCLE => awt.MultipleGradientPaint.CycleMethod.NO_CYCLE
-        case LinearGradient.CycleMethod.REFLECT =>
-          java.awt.MultipleGradientPaint.CycleMethod.REFLECT
-        case LinearGradient.CycleMethod.REPEAT => java.awt.MultipleGradientPaint.CycleMethod.REPEAT
     )
 
   /** Calculates the average color of the gradient.

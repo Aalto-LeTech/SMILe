@@ -2,7 +2,7 @@ package smile.pictures
 
 import smile.Settings.DefaultPosition
 import smile.colors.Color
-import smile.infrastructure.{BufferAdapter, ResourceFactory}
+import smile.infrastructure.{BufferAdapter, Renderer, ResourceFactory}
 import smile.modeling.*
 
 /** Companion object for the `Bitmap` class, providing factory methods for creating `Bitmap`
@@ -163,7 +163,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     val resultHeight = buffer.height.min(another.buffer.height)
 
     val result       = new Bitmap(resultWidth, resultHeight)
-    val resultBuffer = result.buffer.get
+    val resultBuffer = result.buffer
     for
       x <- 0 until resultWidth
       y <- 0 until resultHeight
@@ -172,7 +172,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       val secondColor = another.getColor(x, y)
 
       val newColor = pixelMerger(firstColor, secondColor)
-      resultBuffer.setRGB(x, y, newColor.toARGBInt)
+      resultBuffer.setRGBA(x, y, newColor) // TODO: improve perf
 
     result
   end mergeWith
@@ -186,14 +186,8 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   The `Bitmap` instance with updated colors.
     */
   def setColorsByLocation(generator: (Int, Int) => Color): Bitmap =
-    val result       = deepCopy()
-    val resultBuffer = result.buffer.get
-    for
-      x <- 0 until buffer.width
-      y <- 0 until buffer.height
-    do
-      val color = generator(x, y)
-      resultBuffer.setRGB(x, y, color.toARGBInt)
+    val result = new Bitmap(buffer.width, buffer.height)
+    result.buffer.setColorsByLocation(generator)
     result
 
   /** Transforms each pixel color of this bitmap using a specified color transformer function.
@@ -204,15 +198,8 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   A new `Bitmap` instance with transformed colors.
     */
   def transformColorToColor(transformer: Color => Color): Bitmap =
-    val result       = new Bitmap(buffer.width, buffer.height)
-    val resultBuffer = result.buffer.get
-    for
-      x <- 0 until buffer.width
-      y <- 0 until buffer.height
-    do
-      val color = this.getColor(x, y)
-      resultBuffer.setRGB(x, y, transformer(color).toARGBInt)
-    result
+    val resultBuffer = buffer.transformColorToColor(transformer)
+    internalCopy(newBuffer = resultBuffer)
   end transformColorToColor
 
   override def scaleBy(horizontalFactor: Double, verticalFactor: Double): PictureElement =
@@ -379,5 +366,5 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   `true` if the save operation was successful, `false` otherwise.
     */
   def saveAsPngTo(path: String): Boolean =
-    buffer.saveToPath(path)
+    false // TODO buffer.saveToPath(path)
 end Bitmap

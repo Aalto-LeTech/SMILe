@@ -2,8 +2,6 @@ package smile.pictures
 
 import smile.colors.Paint
 
-import java.awt.BasicStroke
-
 /** Represents the fill style for drawing operations.
   *
   * @param paint
@@ -18,28 +16,28 @@ object StrokeStyle:
   /** Represents the cap style for the stroke, determining how the start and end of stroked lines
     * and paths are rendered.
     */
-  enum Cap(val value: Int):
+  enum Cap:
     /** The end of the stroke is flat. */
-    case Butt extends Cap(BasicStroke.CAP_BUTT)
+    case Butt
 
     /** The end of the stroke is rounded. */
-    case Round extends Cap(BasicStroke.CAP_ROUND)
+    case Round
 
     /** The end of the stroke is squared off. */
-    case Square extends Cap(BasicStroke.CAP_SQUARE)
+    case Square
 
   /** Represents the join style for the stroke, determining how the connection between two line
     * segments is rendered.
     */
-  enum Join(val value: Int):
+  enum Join:
     /** The outer edges of a join meet at a sharp point. */
-    case Miter extends Join(BasicStroke.JOIN_MITER)
+    case Miter
 
     /** The join is rounded. */
-    case Round extends Join(BasicStroke.JOIN_ROUND)
+    case Round
 
     /** The join is flattened to a line. */
-    case Bevel extends Join(BasicStroke.JOIN_BEVEL)
+    case Bevel
 
 /** Encapsulates the style attributes for stroking operations, including color, line width, and line
   * cap and join styles.
@@ -59,10 +57,4 @@ case class StrokeStyle(
     cap: StrokeStyle.Cap = StrokeStyle.Cap.Square,
     join: StrokeStyle.Join = StrokeStyle.Join.Miter,
     onTop: Boolean = true
-):
-  /** Converts this `StrokeStyle` into an AWT `BasicStroke` object.
-    *
-    * @return
-    *   An instance of `BasicStroke` configured according to this `StrokeStyle`.
-    */
-  def toAWTStroke = new BasicStroke(width.toFloat, cap.value, join.value)
+)

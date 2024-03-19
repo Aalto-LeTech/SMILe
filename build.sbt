@@ -1,14 +1,50 @@
-val scala3Version = "3.4.0"
+val scala3Version = "3.3.3" // Scala LTS
+val smileVersion  = "0.1.0"
 
-lazy val root = project
+lazy val SMILe = project
+  .in(file("."))
+  .aggregate(smile.js, smile.jvm)
+  .settings(
+    publish      := {},
+    publishLocal := {}
+  )
+
+lazy val smile = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .settings(
-    name                                   := "SMILe",
-    version                                := "0.1.0-SNAPSHOT",
-    scalaVersion                           := scala3Version,
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+    name         := "SMILe",
+    version      := smileVersion,
+    scalaVersion := scala3Version,
     scalacOptions ++= Seq("-deprecation", "-Wunused:linted")
   )
+  .jvmSettings(
+    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided"
+  )
+  .jsSettings(
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0",
+    libraryDependencies += "com.lihaoyi"  %%% "scalatags"   % "0.12.0",
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.ESModule)
+    },
+    packageJsonTask := {
+      val jsDir     = (Compile / fastLinkJS / crossTarget).value / "smile-fastopt"
+      val outputDir = (Compile / fastLinkJS / crossTarget).value / "smile"
+      val jsonFile  = outputDir / "package.json"
+      IO.copyDirectory(jsDir, outputDir)
+      IO.write(jsonFile, packageJson)
+      streams.value.log.success(s"Generated package.json in $outputDir")
+    },
+    addCommandAlias("js", ";fastLinkJS;packageJsonTask")
+  )
+
+lazy val packageJsonTask = taskKey[Unit]("Generates package.json file")
+
+lazy val packageJson = s"""{
+  "name": "smile",
+  "version": "$smileVersion"
+}"""
+
+// SCALADOC SETTINGS
 
 Compile / doc / scalacOptions ++= Seq("-siteroot", "docs")
 Compile / doc / scalacOptions ++= Seq("-project-logo", "images/logo.png")

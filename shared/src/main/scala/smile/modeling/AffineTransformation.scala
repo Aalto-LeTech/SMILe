@@ -2,8 +2,6 @@ package smile.modeling
 
 import smile.infrastructure.MathUtils
 
-import java.awt.geom.AffineTransform as AWTAffineTransform
-
 /** Provides factory methods for creating common affine transformations, including flips and
   * rotations, relative to various axes and points.
   */
@@ -117,22 +115,4 @@ case class AffineTransformation(
     delta: Double,
     beta: Double,
     tauY: Double
-):
-  /** Converts this `AffineTransformation` to a Java AWT `AffineTransform`.
-    *
-    * @return
-    *   An `AWTAffineTransform` equivalent to this affine transformation.
-    */
-  def toAWTAffineTransform: AWTAffineTransform =
-    val awtTransform = new AWTAffineTransform()
-
-    awtTransform.setTransform(
-      alpha,
-      delta,
-      gamma,
-      beta,
-      tauX,
-      tauY
-    )
-
-    awtTransform
+)

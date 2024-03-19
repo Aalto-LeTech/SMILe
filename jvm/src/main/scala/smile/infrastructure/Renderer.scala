@@ -1,8 +1,9 @@
-package smile.pictures
+package smile.infrastructure
 
 import smile.infrastructure.Constants.MaximumOpacity
 import smile.infrastructure.{BufferAdapter, DrawingSurface}
 import smile.modeling.BoundaryCalculator
+import smile.pictures.*
 
 import scala.annotation.tailrec
 
