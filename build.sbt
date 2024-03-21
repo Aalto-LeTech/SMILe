@@ -3,11 +3,12 @@ val smileVersion  = "0.1.0"
 
 lazy val SMILe = project
   .in(file("."))
-  .aggregate(smile.js, smile.jvm)
   .settings(
     publish      := {},
-    publishLocal := {}
+    publishLocal := {},
+    scalaVersion := scala3Version
   )
+  .aggregate(smile.js, smile.jvm)
 
 lazy val smile = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
@@ -20,11 +21,14 @@ lazy val smile = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided"
   )
+  .jsEnablePlugins(ScalablyTypedConverterExternalNpmPlugin)
   .jsSettings(
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.2.0",
+    externalNpm                            := baseDirectory.value,
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
     libraryDependencies += "com.lihaoyi"  %%% "scalatags"   % "0.12.0",
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
+        .withSourceMap(true)
     },
     packageJsonTask := {
       val jsDir     = (Compile / fastLinkJS / crossTarget).value / "smile-fastopt"

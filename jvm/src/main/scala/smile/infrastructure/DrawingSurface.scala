@@ -20,13 +20,17 @@ extension (value: Double)
   def truncate: Double =
     if value > 0 then value.floor else value.ceil
 
+object DrawingSurface:
+  private[smile] def fontToAWT(font: String, size: Double): awt.Font =
+    new awt.Font(font, awt.Font.BOLD, size.toInt)
+
 /** Represents a drawing surface for rendering shapes, images, and text. It encapsulates a
   * `BufferAdapter` to provide a high-level drawing API.
   *
   * @param owner
   *   The `BufferAdapter` instance that this `DrawingSurface` operates on.
   */
-class DrawingSurface(val owner: BufferAdapter):
+class DrawingSurface(val owner: JVMBufferAdapter):
 
   /** A ``BasicStroke`` instance to represent as thin line as possible (i.e., width = 1 pixel). */
   private val HairlineStroke = new BasicStroke(1)
@@ -310,10 +314,12 @@ class DrawingSurface(val owner: BufferAdapter):
       x: Double,
       y: Double,
       text: String,
-      font: Font,
+      typeface: String,
+      size: Double,
       fillStyle: Option[FillStyle],
       strokeStyle: Option[StrokeStyle]
   ): Unit =
+    val font = DrawingSurface.fontToAWT(typeface, size)
     owner.withGraphics2D: g =>
       val glyphVector = if isScaled then
         val visualBounds =

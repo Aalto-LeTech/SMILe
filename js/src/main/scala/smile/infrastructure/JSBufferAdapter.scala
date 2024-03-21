@@ -8,8 +8,8 @@ import smile.Settings.DefaultBackgroundColor
 import smile.colors.Color
 import smile.modeling.AffineTransformation
 
-object BufferAdapter:
-  val Empty: BufferAdapter = BufferAdapter(1, 1)
+object JSBufferAdapter:
+  val Empty: JSBufferAdapter = JSBufferAdapter(0, 0)
 
 /** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
   * image processing tasks such as copying, scaling, and transforming.
@@ -17,7 +17,7 @@ object BufferAdapter:
   * @param buffer
   *   The underlying `BufferedImage` instance.
   */
-class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstract:
+class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[html.Canvas]:
   private val buffer: html.Canvas = canvas().render
 
   buffer.width = width
@@ -26,20 +26,14 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
   private[infrastructure] val ctx =
     buffer.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
 
-  /** Scaling method used for image scaling operations. */
-  private def ScalingMethod: Int = Settings.BufferScalingMethod.value
-
-  /** Transformation method used for image transformation operations. */
-  private def TransformMethod: Int = Settings.BufferTransformMethod.value
-
-  /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
-    * new one.
+  /** Creates a deep copy of the current `JSBufferAdapter` instance, drawing the current buffer onto
+    * a new one.
     *
     * @return
-    *   A new `BufferAdapter` instance that is a copy of the current one.
+    *   A new `JSBufferAdapter` instance that is a copy of the current one.
     */
-  def deepCopy: BufferAdapter =
-    val newBuffer = BufferAdapter(width, height)
+  def deepCopy: JSBufferAdapter =
+    val newBuffer = JSBufferAdapter(width, height)
     val imageData = ctx.getImageData(0, 0, width, height)
     newBuffer.ctx.putImageData(imageData, 0, 0)
     newBuffer
@@ -52,7 +46,13 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
   def get: html.Canvas = buffer
 
   def imageData: Seq[Color] =
-    ctx.getImageData(0, 0, width, height).data.toSeq.map(Color.fromRgbaInt)
+    val data = ctx
+      .getImageData(0, 0, width, height)
+      .data
+    (0 until width * height).map(i =>
+      val index = i * 4
+      Color(data(index), data(index + 1), data(index + 2), data(index + 3))
+    )
 
   /** Retrieves the color at a specified pixel location in the buffer.
     *
@@ -82,18 +82,18 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
     * @param targetHeight
     *   The target height for the scaled image.
     * @return
-    *   A new `BufferAdapter` instance containing the scaled image.
+    *   A new `JSBufferAdapter` instance containing the scaled image.
     */
   def scaleTo(
       targetWidth: Double,
       targetHeight: Double
-  ): BufferAdapter = ??? /*
+  ): JSBufferAdapter = ??? /*
     val isNearestNeighbor = Settings.BufferScalingMethod == Settings.ScalingMethod.NearestNeighbor
 
     val newWidth  = targetWidth.toInt.abs
     val newHeight = targetHeight.toInt.abs
 
-    val newBuffer = BufferAdapter(newWidth, newHeight)
+    val newBuffer = JSBufferAdapter(newWidth, newHeight)
 
     val g = newBuffer.buffer.createGraphics()
 
@@ -139,8 +139,8 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
       topLeftY: Double,
       width: Double,
       height: Double
-  ): BufferAdapter =
-    if width <= 0 || height <= 0 then return BufferAdapter.Empty
+  ): JSBufferAdapter =
+    if width <= 0 || height <= 0 then return JSBufferAdapter.Empty
 
     val flooredWidth: Int  = width.floor.toInt
     val flooredHeight: Int = height.floor.toInt
@@ -153,13 +153,13 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
         flooredHeight
       )
 
-    val newBuffer = BufferAdapter(flooredWidth, flooredHeight)
+    val newBuffer = JSBufferAdapter(flooredWidth, flooredHeight)
     newBuffer.ctx.putImageData(sourceBufferArea, 0, 0)
 
     newBuffer
   end copyPortionXYWH
 
-  /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
+  /** Creates a new `JSBufferAdapter` instance that is a transformed version of the current buffer.
     * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
     * resized based on the transformation.
     *
@@ -169,12 +169,12 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
     *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
     *   `DefaultBackgroundColor`.
     * @return
-    *   A new `BufferAdapter` instance containing the transformed image.
+    *   A new `JSBufferAdapter` instance containing the transformed image.
     */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
       backgroundColor: Color = DefaultBackgroundColor
-  ): BufferAdapter = ??? /*
+  ): JSBufferAdapter = ??? /*
 
     val globalInterpolationMethod = TransformMethod
 
@@ -205,9 +205,9 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
     val finalTransformOperation =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
 
-    if resultingImageWidth == 0 || resultingImageHeight == 0 then BufferAdapter.Empty
+    if resultingImageWidth == 0 || resultingImageHeight == 0 then JSBufferAdapter.Empty
     else
-      val resultingBuffer = BufferAdapter(resultingImageWidth, resultingImageHeight)
+      val resultingBuffer = JSBufferAdapter(resultingImageWidth, resultingImageHeight)
       new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
       finalTransformOperation.filter(buffer, resultingBuffer.get)
       resultingBuffer
@@ -220,8 +220,6 @@ class BufferAdapter(val width: Int, val height: Int) extends BufferAdapterAbstra
     * @return
     *   `true` if the image was saved successfully, `false` otherwise.
     */
-  //def saveToPath(path: String): Boolean = ???
+  // def saveToPath(path: String): Boolean = ???
 //    ImageIO.write(buffer, "png", new File(path))
-
-  def toPNG: String = buffer.toDataURL("image/png")
-end BufferAdapter
+end JSBufferAdapter

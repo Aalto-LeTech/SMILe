@@ -10,7 +10,7 @@ object AnimatedPicture:
    * @return An `AnimatedPicture` instance created from the GIF file.
    */
   def fromGifPath(sourceResourcePath: String): AnimatedPicture =
-    ResourceFactory.animatedPictureFromPath(sourceResourcePath)
+    ResourceFactory().animatedPictureFromPath(sourceResourcePath)
 
 /** Represents an animated picture, consisting of a sequence of frames (PictureElements) and their display durations.
  *

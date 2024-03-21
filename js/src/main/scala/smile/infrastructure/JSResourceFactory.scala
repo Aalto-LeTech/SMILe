@@ -1,12 +1,12 @@
 package smile.infrastructure
 
+import org.scalajs.dom.html
 import smile.pictures.AnimatedPicture
-import org.scalajs.dom.{Element, window}
+
 /** Provides functionalities for creating and saving images from various sources.
   */
-object ResourceFactory:
-  window.console.log("ResourceFactory")  
-  
+object JSResourceFactory extends ResourceFactory[html.Canvas]:
+
   /*
   /** Creates a `BufferAdapter` from an image located at a given path. This method can load images
    * from local file paths, resources within the application's classpath, and URIs, including those
@@ -21,7 +21,7 @@ object ResourceFactory:
    */
 
    */
-  def bufferAdapterFromPath(path: String): BufferAdapter = ???
+  def bufferAdapterFromPath(path: String): JSBufferAdapter = ???
   /*
     val image = bufferedImageFromPath(path)
     bufferFromImage(image)

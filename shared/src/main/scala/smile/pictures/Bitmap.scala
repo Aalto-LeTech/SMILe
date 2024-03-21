@@ -58,7 +58,7 @@ object Bitmap:
     *   A new `Bitmap` instance loaded from the specified path.
     */
   def apply(sourceResourcePath: String): Bitmap =
-    val image = ResourceFactory.bufferAdapterFromPath(sourceResourcePath)
+    val image = ResourceFactory().bufferAdapterFromPath(sourceResourcePath)
     new Bitmap(image, Bounds(DefaultPosition, image.width, image.height))
 
   /** Creates a `Bitmap` from a collection of picture elements.
@@ -68,7 +68,7 @@ object Bitmap:
     * @return
     *   A `Bitmap` representing the rendered picture elements.
     */
-  def apply(elements: PictureElement*): Bitmap = Renderer.createBitmapFrom(elements*)
+  def apply(elements: PictureElement*): Bitmap = Renderer().createBitmapFrom(elements*)
 
   /** Creates a `Bitmap` from a `Picture`.
     *
@@ -77,7 +77,7 @@ object Bitmap:
     * @return
     *   A `Bitmap` representing the rendered picture.
     */
-  def apply(picture: Picture): Bitmap = Renderer.createBitmapFrom(picture)
+  def apply(picture: Picture): Bitmap = Renderer().createBitmapFrom(picture)
 
   object Empty extends Bitmap(BufferAdapter.Empty, NullBounds)
 
@@ -88,7 +88,7 @@ object Bitmap:
   * @param bounds
   *   The boundaries of the bitmap.
   */
-class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
+class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends PictureElement:
 
   /** Primary constructor for creating a `Bitmap` with specified dimensions.
     *
@@ -98,7 +98,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     *   The height of the bitmap.
     */
   def this(width: Int, height: Int) =
-    this(new BufferAdapter(width, height), Bounds(DefaultPosition, width, height))
+    this(BufferAdapter(width, height), Bounds(DefaultPosition, width, height))
 
   override lazy val boundary: Bounds = bounds
 
@@ -115,7 +115,10 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
       boundary.moveBy(newPosition.x, newPosition.y)
     )
 
-  private def internalCopy(newBuffer: BufferAdapter = buffer, newBounds: Bounds = bounds): Bitmap =
+  private def internalCopy(
+      newBuffer: BufferAdapter[?] = buffer,
+      newBounds: Bounds = bounds
+  ): Bitmap =
     new Bitmap(newBuffer, newBounds)
 
   /** Moves this `Bitmap` by specified offsets.
@@ -161,20 +164,10 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
   def mergeWith(another: Bitmap, pixelMerger: (Color, Color) => Color): Bitmap =
     val resultWidth  = buffer.width.min(another.buffer.width)
     val resultHeight = buffer.height.min(another.buffer.height)
-
-    val result       = new Bitmap(resultWidth, resultHeight)
-    val resultBuffer = result.buffer
-    for
-      x <- 0 until resultWidth
-      y <- 0 until resultHeight
-    do
-      val firstColor  = this.getColor(x, y)
-      val secondColor = another.getColor(x, y)
-
-      val newColor = pixelMerger(firstColor, secondColor)
-      resultBuffer.setRGBA(x, y, newColor) // TODO: improve perf
-
-    result
+    new Bitmap(
+      buffer.mergeWith(another.buffer, pixelMerger),
+      Bounds(DefaultPosition, resultWidth, resultHeight)
+    )
   end mergeWith
 
   /** Sets the colors of the bitmap based on a function that generates colors for each pixel
@@ -283,7 +276,7 @@ class Bitmap(val buffer: BufferAdapter, bounds: Bounds) extends PictureElement:
     * @return
     *   A new [[BufferAdapter]] containing the transformed pixel data.
     */
-  private def transformContentUsing(transformation: AffineTransformation): BufferAdapter =
+  private def transformContentUsing(transformation: AffineTransformation): BufferAdapter[?] =
     buffer.createTransformedVersionWith(transformation = transformation)
 
   /** Flips the bitmap content horizontally. This is equivalent to reflecting the image across a

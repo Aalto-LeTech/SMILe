@@ -2,8 +2,6 @@ package smile.pictures
 
 import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
 
-import java.awt.Font
-
 /** Represents a single line of text as a graphical element.
   *
   * @param pos
@@ -23,49 +21,20 @@ class Text(
     pos: Pos,
     val customBounds: Option[Bounds],
     val content: String,
-    val font: Font,
+    val typeface: String,
+    val size: Double,
+    val weight: Int,
     override val fillStyle: Option[FillStyle],
     override val strokeStyle: Option[StrokeStyle]
 ) extends VectorGraphic:
-
-  /** Secondary constructor with a default font.
-    *
-    * @param pos
-    *   The position of the text.
-    * @param customBounds
-    *   Optional custom bounds for the text.
-    * @param content
-    *   The content of the text.
-    * @param size
-    *   The size of the font.
-    * @param fillStyle
-    *   Optional fill style for the text.
-    * @param strokeStyle
-    *   Optional stroke style for the text.
-    */
-  def this(
-      pos: Pos,
-      customBounds: Option[Bounds],
-      content: String,
-      typeface: String,
-      size: Double,
-      fillStyle: Option[FillStyle],
-      strokeStyle: Option[StrokeStyle]
-  ) =
-    this(
-      pos,
-      customBounds,
-      content,
-      new Font(typeface, Font.BOLD, size.toInt),
-      fillStyle,
-      strokeStyle
-    )
 
   override def copy(newPosition: Pos): Text = new Text(
     newPosition,
     customBounds,
     content,
-    font,
+    typeface,
+    size,
+    weight,
     fillStyle,
     strokeStyle
   )
@@ -74,7 +43,9 @@ class Text(
       newPosition: Pos = position,
       newCustomBounds: Option[Bounds] = customBounds,
       newContent: String = content,
-      newFont: Font = font,
+      newTypeface: String = typeface,
+      newSize: Double = size,
+      newWeight: Int = weight,
       newFillStyle: Option[FillStyle] = fillStyle,
       newStrokeStyle: Option[StrokeStyle] = strokeStyle
   ): Text =
@@ -82,7 +53,9 @@ class Text(
       newPosition,
       newCustomBounds,
       newContent,
-      newFont,
+      newTypeface,
+      newSize,
+      newWeight,
       newFillStyle,
       newStrokeStyle
     )

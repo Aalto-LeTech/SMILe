@@ -12,19 +12,20 @@ import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.Icon
 
-object BufferAdapter:
-  val Empty: BufferAdapter = BufferAdapter(1, 1)
-
+object JVMBufferAdapter:
+  val Empty: JVMBufferAdapter = JVMBufferAdapter(1, 1)
+  
 /** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
   * image processing tasks such as copying, scaling, and transforming.
   *
   * @param buffer
   *   The underlying `BufferedImage` instance.
   */
-class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbstract:
+class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[BufferedImage]:
 
-  /** Creates a `BufferAdapter` instance with specified width and height, initializing a new
+  /** Creates a `JVMBufferAdapter` instance with specified width and height, initializing a new
     * `BufferedImage`.
+   * 
     *
     * @param width
     *   The width of the image.
@@ -57,14 +58,14 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
 
     awtTransform
 
-  /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
+  /** Creates a deep copy of the current `JVMBufferAdapter` instance, drawing the current buffer onto a
     * new one.
     *
     * @return
-    *   A new `BufferAdapter` instance that is a copy of the current one.
+    *   A new `JVMBufferAdapter` instance that is a copy of the current one.
     */
-  def deepCopy: BufferAdapter =
-    val newBuffer = BufferAdapter(width, height)
+  def deepCopy: JVMBufferAdapter =
+    val newBuffer = JVMBufferAdapter(width, height)
     newBuffer.withGraphics2D(g => g.drawImage(buffer, 0, 0, null))
     newBuffer
 
@@ -126,18 +127,18 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     * @param targetHeight
     *   The target height for the scaled image.
     * @return
-    *   A new `BufferAdapter` instance containing the scaled image.
+    *   A new `JVMBufferAdapter` instance containing the scaled image.
     */
   def scaleTo(
       targetWidth: Double,
       targetHeight: Double
-  ): BufferAdapter =
+  ): JVMBufferAdapter =
     val isNearestNeighbor = Settings.BufferScalingMethod == Settings.ScalingMethod.NearestNeighbor
 
     val newWidth  = targetWidth.toInt.abs
     val newHeight = targetHeight.toInt.abs
 
-    val newBuffer = BufferAdapter(newWidth, newHeight)
+    val newBuffer = JVMBufferAdapter(newWidth, newHeight)
 
     val g = newBuffer.buffer.createGraphics()
 
@@ -209,15 +210,15 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     * @param height
     *   Height of the portion to copy.
     * @return
-    *   A new `BufferAdapter` instance containing the copied portion of the image.
+    *   A new `JVMBufferAdapter` instance containing the copied portion of the image.
     */
   def copyPortionXYWH(
       topLeftX: Double,
       topLeftY: Double,
       width: Double,
       height: Double
-  ): BufferAdapter =
-    if width <= 0 || height <= 0 then return BufferAdapter.Empty
+  ): JVMBufferAdapter =
+    if width <= 0 || height <= 0 then return JVMBufferAdapter.Empty
 
     val flooredWidth: Int  = width.floor.toInt
     val flooredHeight: Int = height.floor.toInt
@@ -230,7 +231,7 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
         flooredHeight
       )
 
-    new BufferAdapter(sourceBufferArea)
+    new JVMBufferAdapter(sourceBufferArea)
   end copyPortionXYWH
 
   private[infrastructure] def withGraphics2D[ResultType](
@@ -275,7 +276,7 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     )
   end setDefaultGraphics2DProperties
 
-  /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
+  /** Creates a new `JVMBufferAdapter` instance that is a transformed version of the current buffer.
     * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
     * resized based on the transformation.
     *
@@ -285,12 +286,12 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
     *   `DefaultBackgroundColor`.
     * @return
-    *   A new `BufferAdapter` instance containing the transformed image.
+    *   A new `JVMBufferAdapter` instance containing the transformed image.
     */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
       backgroundColor: Color = DefaultBackgroundColor
-  ): BufferAdapter =
+  ): JVMBufferAdapter =
 
     val globalInterpolationMethod = TransformMethod
 
@@ -321,9 +322,9 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     val finalTransformOperation =
       new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
 
-    if resultingImageWidth == 0 || resultingImageHeight == 0 then BufferAdapter.Empty
+    if resultingImageWidth == 0 || resultingImageHeight == 0 then JVMBufferAdapter.Empty
     else
-      val resultingBuffer = BufferAdapter(resultingImageWidth, resultingImageHeight)
+      val resultingBuffer = JVMBufferAdapter(resultingImageWidth, resultingImageHeight)
       new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
       finalTransformOperation.filter(buffer, resultingBuffer.get)
       resultingBuffer
@@ -338,4 +339,4 @@ class BufferAdapter(private val buffer: BufferedImage) extends BufferAdapterAbst
     */
   def saveToPath(path: String): Boolean =
     ImageIO.write(buffer, "png", new File(path))
-end BufferAdapter
+end JVMBufferAdapter

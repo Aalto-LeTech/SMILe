@@ -1,15 +1,15 @@
 package smile.infrastructure
 
 import smile.infrastructure.Constants.MaximumOpacity
-import smile.infrastructure.{BufferAdapter, DrawingSurface}
 import smile.modeling.BoundaryCalculator
 import smile.pictures.*
 
+import java.awt.image.BufferedImage
 import scala.annotation.tailrec
 
 /** Provides functionality for rendering pictures and their elements into bitmaps.
   */
-object Renderer:
+object JVMRenderer extends Renderer:
   /** Creates a bitmap representation of a sequence of picture elements.
     *
     * @param elements
@@ -40,7 +40,7 @@ object Renderer:
 
     require(flooredWidth > 0 && flooredHeight > 0, "Bitmap width and height must be positive")
 
-    val buffer = new BufferAdapter(flooredWidth, flooredHeight)
+    val buffer = new JVMBufferAdapter(flooredWidth, flooredHeight)
 
     val (xOffsetToOrigin, yOffsetToOrigin) =
       val upperLeftCorner = bounds.upperLeftCorner
@@ -131,7 +131,7 @@ object Renderer:
         val topLeftY = yOffsetToOrigin + topLeft.y
 
         targetDrawingSurface.drawBitmap(
-          bitmap.buffer.get,
+          bitmap.buffer.get.asInstanceOf[BufferedImage],
           topLeftX,
           topLeftY,
           MaximumOpacity
@@ -172,7 +172,8 @@ object Renderer:
           text.position.x,
           text.position.y,
           text.content,
-          text.font,
+          text.typeface,
+          text.size,
           text.fillStyle,
           text.strokeStyle
         )
