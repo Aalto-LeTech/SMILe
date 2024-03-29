@@ -5,11 +5,14 @@ import smile.colors.Color
 import smile.modeling.AffineTransformation
 
 object BufferAdapter:
-  def apply(width: Int, height: Int): BufferAdapter[?] = 
+  def apply(width: Int, height: Int): BufferAdapter[?] =
     PlatformSpecific.bufferAdapter(width, height)
 
   val Empty: BufferAdapter[?] = apply(1, 1)
 
+/** Adapter for managing and manipulating a bitmap. This class provides methods for common image
+  * processing tasks such as copying, scaling, and transforming.
+  */
 abstract class BufferAdapter[Buffer]:
 
   val width: Int
@@ -19,13 +22,13 @@ abstract class BufferAdapter[Buffer]:
 
   def get: Buffer
 
-  /** Creates a deep copy of the current `JVMBufferAdapter` instance, drawing the current buffer
-    * onto a new one.
+  /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
+    * new one.
     *
     * @return
-    *   A new `JVMBufferAdapter` instance that is a copy of the current one.
+    *   A new `BufferAdapter` instance that is a copy of the current one.
     */
-  def deepCopy: BufferAdapter[?]
+  def deepCopy: BufferAdapter[Buffer]
 
   /** Sets the colors of the image from a sequence of `Color` objects.
     *
@@ -48,6 +51,17 @@ abstract class BufferAdapter[Buffer]:
     */
   def pixelColor(x: Int, y: Int): Color
 
+  /** Sets the color of a pixel at a specified location in the buffer.
+    *
+    * @param x
+    *   The x-coordinate of the pixel.
+    * @param y
+    *   The y-coordinate of the pixel.
+    * @param color
+    *   The `Color` to set the pixel to.
+    */
+  def setRGBA(x: Int, y: Int, color: Color): Unit
+
   /** Scales the image to a target width and height.
     *
     * @param targetWidth
@@ -55,12 +69,12 @@ abstract class BufferAdapter[Buffer]:
     * @param targetHeight
     *   The target height for the scaled image.
     * @return
-    *   A new `JVMBufferAdapter` instance containing the scaled image.
+    *   A new `BufferAdapter` instance containing the scaled image.
     */
   def scaleTo(
       targetWidth: Double,
       targetHeight: Double
-  ): BufferAdapter[?]
+  ): BufferAdapter[Buffer]
 
   /** Copies a portion of the image defined by two corners: top-left and bottom-right.
     *
@@ -128,6 +142,15 @@ abstract class BufferAdapter[Buffer]:
     result
   end transformColorToColor
 
+  /** Merges this Buffer with another Buffer using a specified pixel merging function.
+    *
+    * @param another
+    *   The other BufferAdapter to merge with.
+    * @param pixelMerger
+    *   A function that takes two colors and returns a merged color.
+    * @return
+    *   A new `BufferAdapter` instance representing the merged image.
+    */
   def mergeWith(another: BufferAdapter[?], pixelMerger: (Color, Color) => Color): BufferAdapter[?] =
     val resultWidth  = width.min(another.width)
     val resultHeight = height.min(another.height)
@@ -143,7 +166,7 @@ abstract class BufferAdapter[Buffer]:
     result
   end mergeWith
 
-  /** Creates a new `JVMBufferAdapter` instance that is a transformed version of the current buffer.
+  /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
     * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
     * resized based on the transformation.
     *
@@ -153,11 +176,11 @@ abstract class BufferAdapter[Buffer]:
     *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
     *   `DefaultBackgroundColor`.
     * @return
-    *   A new `JVMBufferAdapter` instance containing the transformed image.
+    *   A new `BufferAdapter` instance containing the transformed image.
     */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
       backgroundColor: Color = DefaultBackgroundColor
-  ): BufferAdapter[?]
+  ): BufferAdapter[Buffer]
 
 end BufferAdapter

@@ -8,14 +8,13 @@ import smile.Settings.DefaultBackgroundColor
 import smile.colors.Color
 import smile.modeling.AffineTransformation
 
+import scala.scalajs.js
+
 object JSBufferAdapter:
   val Empty: JSBufferAdapter = JSBufferAdapter(0, 0)
 
-/** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
+/** Adapter for managing and manipulating an HTML Canvas. This class provides methods for common
   * image processing tasks such as copying, scaling, and transforming.
-  *
-  * @param buffer
-  *   The underlying `BufferedImage` instance.
   */
 class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[html.Canvas]:
   private val buffer: html.Canvas = canvas().render
@@ -23,15 +22,13 @@ class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[htm
   buffer.width = width
   buffer.height = height
 
-  private[infrastructure] val ctx =
-    buffer.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+  private val options = js.Dictionary("willReadFrequently" -> true)
 
-  /** Creates a deep copy of the current `JSBufferAdapter` instance, drawing the current buffer onto
-    * a new one.
-    *
-    * @return
-    *   A new `JSBufferAdapter` instance that is a copy of the current one.
-    */
+  private[infrastructure] val ctx =
+    buffer.getContext("2d", options).asInstanceOf[dom.CanvasRenderingContext2D]
+
+  ctx.imageSmoothingEnabled = true
+
   def deepCopy: JSBufferAdapter =
     val newBuffer = JSBufferAdapter(width, height)
     val imageData = ctx.getImageData(0, 0, width, height)
@@ -54,15 +51,6 @@ class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[htm
       Color(data(index), data(index + 1), data(index + 2), data(index + 3))
     )
 
-  /** Retrieves the color at a specified pixel location in the buffer.
-    *
-    * @param x
-    *   The x-coordinate of the pixel.
-    * @param y
-    *   The y-coordinate of the pixel.
-    * @return
-    *   The `Color` of the pixel at the specified coordinates.
-    */
   def pixelColor(x: Int, y: Int): Color =
     val argb = ctx.getImageData(x, y, 1, 1).data
     new Color(argb(0), argb(1), argb(2), argb(3))
@@ -75,51 +63,22 @@ class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[htm
     imageData.data(3) = color.opacity
     ctx.putImageData(imageData, x, y)
 
-  /** Scales the image to a target width and height.
-    *
-    * @param targetWidth
-    *   The target width for the scaled image.
-    * @param targetHeight
-    *   The target height for the scaled image.
-    * @return
-    *   A new `JSBufferAdapter` instance containing the scaled image.
-    */
   def scaleTo(
       targetWidth: Double,
       targetHeight: Double
-  ): JSBufferAdapter = ??? /*
-    val isNearestNeighbor = Settings.BufferScalingMethod == Settings.ScalingMethod.NearestNeighbor
-
+  ): JSBufferAdapter =
     val newWidth  = targetWidth.toInt.abs
     val newHeight = targetHeight.toInt.abs
-
     val newBuffer = JSBufferAdapter(newWidth, newHeight)
-
-    val g = newBuffer.buffer.createGraphics()
-
-    // Flip the image if necessary.
-    if targetWidth < 0 || targetHeight < 0 then
-      val tx = AffineTransform.getScaleInstance(
-        if targetWidth < 0 then -1 else 1,
-        if targetHeight < 0 then -1 else 1
-      )
-      if targetWidth < 0 then tx.translate(-newWidth, 0)
-      if targetHeight < 0 then tx.translate(0, -newHeight)
-      g.transform(tx)
-
-    if isNearestNeighbor then
-      g.setRenderingHint(
-        RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-      )
-      g.drawImage(this.buffer, 0, 0, newWidth, newHeight, null)
-    else
-      val image = this.buffer.getScaledInstance(newWidth, newHeight, ScalingMethod)
-      g.drawImage(image, 0, 0, null)
-    g.dispose()
-
+    val g         = newBuffer.ctx
+    if Settings.BufferScalingMethod == Settings.ScalingMethod.NearestNeighbor then
+      g.imageSmoothingEnabled = false
+    else g.imageSmoothingEnabled = true
+    g.scale(targetWidth / width, targetHeight / height)
+    g.drawImage(buffer, 0, 0)
+    g.scale(1, 1)
     newBuffer
-  end scaleTo*/
+  end scaleTo
 
   def setColorsFromSeq(colors: Seq[Color]): Unit =
     val imageData = ctx.createImageData(width, height)
@@ -159,67 +118,53 @@ class JSBufferAdapter(val width: Int, val height: Int) extends BufferAdapter[htm
     newBuffer
   end copyPortionXYWH
 
-  /** Creates a new `JSBufferAdapter` instance that is a transformed version of the current buffer.
-    * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
-    * resized based on the transformation.
-    *
-    * @param transformation
-    *   The `AffineTransformation` to apply to the image.
-    * @param backgroundColor
-    *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
-    *   `DefaultBackgroundColor`.
-    * @return
-    *   A new `JSBufferAdapter` instance containing the transformed image.
-    */
   def createTransformedVersionWith(
       transformation: AffineTransformation,
       backgroundColor: Color = DefaultBackgroundColor
-  ): JSBufferAdapter = ??? /*
+  ): JSBufferAdapter =
+    def transformPoint(
+        x: Double,
+        y: Double
+    ): (Double, Double) =
+      val newX = transformation.alpha * x + transformation.gamma * y + transformation.tauX
+      val newY = transformation.delta * x + transformation.beta * y + transformation.tauY
+      (newX, newY)
 
-    val globalInterpolationMethod = TransformMethod
+    val corners = Seq(
+      transformPoint(0, 0),
+      transformPoint(width, 0),
+      transformPoint(0, height),
+      transformPoint(width, height)
+    )
 
-    val lowLevelTransformation = transformationToAWT(transformation)
-    val transformedContentBoundaries: Rectangle2D =
-      new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
-        .getBounds2D(buffer)
+    val xs = corners.map(_._1)
+    val ys = corners.map(_._2)
 
-    val (offsetLeft, offsetTop, offsetRight, offsetBottom) =
-      (
-        -transformedContentBoundaries.getMinX,
-        -transformedContentBoundaries.getMinY,
-        transformedContentBoundaries.getMaxX - width,
-        transformedContentBoundaries.getMaxY - height
-      )
+    val minX = xs.min
+    val maxX = xs.max
+    val minY = ys.min
+    val maxY = ys.max
 
-    val (resultingImageWidth, resultingImageHeight) =
-      (
-        Math.floor(width.toDouble + offsetLeft + offsetRight).toInt,
-        Math.floor(height.toDouble + offsetTop + offsetBottom).toInt
-      )
+    val newWidth  = (maxX - minX).toInt
+    val newHeight = (maxY - minY).toInt
 
-    if offsetTop > 0 || offsetLeft > 0 then
-      val translationToBringTheRotatedBitmapFullyVisible =
-        AffineTransform.getTranslateInstance(offsetLeft, offsetTop)
-      lowLevelTransformation.preConcatenate(translationToBringTheRotatedBitmapFullyVisible)
+    val offsetX = -minX
+    val offsetY = -minY
 
-    val finalTransformOperation =
-      new AffineTransformOp(lowLevelTransformation, globalInterpolationMethod)
+    val newBuffer = JSBufferAdapter(newWidth, newHeight)
+    val g         = newBuffer.ctx
 
-    if resultingImageWidth == 0 || resultingImageHeight == 0 then JSBufferAdapter.Empty
-    else
-      val resultingBuffer = JSBufferAdapter(resultingImageWidth, resultingImageHeight)
-      new DrawingSurface(resultingBuffer).clearUsing(backgroundColor, true)
-      finalTransformOperation.filter(buffer, resultingBuffer.get)
-      resultingBuffer
-  end createTransformedVersionWith*/
+    g.setTransform(
+      transformation.alpha,
+      transformation.delta,
+      transformation.gamma,
+      transformation.beta,
+      offsetX + transformation.tauX,
+      offsetY + transformation.tauY
+    )
 
-  /** Saves a `BufferedImage` to a specified path. The image is saved in PNG format.
-    *
-    * @param path
-    *   The filesystem path where the image should be saved.
-    * @return
-    *   `true` if the image was saved successfully, `false` otherwise.
-    */
-  // def saveToPath(path: String): Boolean = ???
-//    ImageIO.write(buffer, "png", new File(path))
+    g.drawImage(buffer, 0, 0)
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    newBuffer
+  end createTransformedVersionWith
 end JSBufferAdapter

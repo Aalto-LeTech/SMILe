@@ -12,18 +12,19 @@ lazy val SMILe = project
 
 lazy val smile = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
+  .enablePlugins(BuildInfoPlugin)
   .settings(
     name         := "SMILe",
     version      := smileVersion,
     scalaVersion := scala3Version,
-    scalacOptions ++= Seq("-deprecation", "-Wunused:linted")
+    scalacOptions ++= Seq("-deprecation", "-Wunused:linted"),
+    buildInfoKeys    := Seq[BuildInfoKey](version),
+    buildInfoPackage := "smile"
   )
   .jvmSettings(
     libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided"
   )
-  .jsEnablePlugins(ScalablyTypedConverterExternalNpmPlugin)
   .jsSettings(
-    externalNpm                            := baseDirectory.value,
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
     libraryDependencies += "com.lihaoyi"  %%% "scalatags"   % "0.12.0",
     scalaJSLinkerConfig ~= {

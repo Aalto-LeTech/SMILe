@@ -1,11 +1,55 @@
 package smile.infrastructure
 
+import org.scalajs.dom
 import org.scalajs.dom.html
 import smile.pictures.AnimatedPicture
+
+import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
 
 /** Provides functionalities for creating and saving images from various sources.
   */
 object JSResourceFactory extends ResourceFactory[html.Canvas]:
+
+  def loadImage(path: String): Future[JSBufferAdapter] =
+    val p   = Promise[JSBufferAdapter]()
+    val img = new dom.Image()
+    img.addEventListener(
+      "load",
+      (_: js.Any) =>
+        val buffer = JSBufferAdapter(img.width, img.height)
+        val ctx    = buffer.ctx
+        ctx.drawImage(img, 0, 0)
+        p.success(buffer)
+    )
+    img.addEventListener(
+      "error",
+      (_: js.Any) =>
+        println("error")
+        p.failure(java.io.IOException(s"Image at path '$path' not found"))
+    )
+    img.src = path
+    p.future
+
+  def loadGif(path: String): Future[AnimatedPicture] = ??? /*
+    val p   = Promise[AnimatedPicture]()
+    val img = new dom.Image()
+    img.addEventListener(
+      "load",
+      (_: js.Any) =>
+        val buffer = JSBufferAdapter(img.width, img.height)
+        val ctx    = buffer.ctx
+        ctx.drawImage(img, 0, 0)
+        p.success(AnimatedPicture(Vector((buffer, 100))))
+    )
+    img.addEventListener(
+      "error",
+      (_: js.Any) =>
+        println("error")
+        p.failure(java.io.IOException(s"Image at path '$path' not found"))
+    )
+    img.src = path
+    p.future*/
 
   /*
   /** Creates a `BufferAdapter` from an image located at a given path. This method can load images

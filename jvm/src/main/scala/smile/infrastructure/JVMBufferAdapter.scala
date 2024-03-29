@@ -14,7 +14,7 @@ import javax.swing.Icon
 
 object JVMBufferAdapter:
   val Empty: JVMBufferAdapter = JVMBufferAdapter(1, 1)
-  
+
 /** Adapter for managing and manipulating a `BufferedImage`. This class provides methods for common
   * image processing tasks such as copying, scaling, and transforming.
   *
@@ -25,7 +25,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
 
   /** Creates a `JVMBufferAdapter` instance with specified width and height, initializing a new
     * `BufferedImage`.
-   * 
     *
     * @param width
     *   The width of the image.
@@ -58,12 +57,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
 
     awtTransform
 
-  /** Creates a deep copy of the current `JVMBufferAdapter` instance, drawing the current buffer onto a
-    * new one.
-    *
-    * @return
-    *   A new `JVMBufferAdapter` instance that is a copy of the current one.
-    */
   def deepCopy: JVMBufferAdapter =
     val newBuffer = JVMBufferAdapter(width, height)
     newBuffer.withGraphics2D(g => g.drawImage(buffer, 0, 0, null))
@@ -76,8 +69,8 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
     */
   def get: BufferedImage = buffer
 
-  def imageData: Seq[Color] = 
-    val raster = buffer.getRaster
+  def imageData: Seq[Color] =
+    val raster                    = buffer.getRaster
     val (red, green, blue, alpha) = (0, 1, 2, 3)
     val colors = for
       y <- 0 until height
@@ -104,15 +97,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
     def getIconHeight: Int = height
   end toSwingIcon
 
-  /** Retrieves the color at a specified pixel location in the buffer.
-    *
-    * @param x
-    *   The x-coordinate of the pixel.
-    * @param y
-    *   The y-coordinate of the pixel.
-    * @return
-    *   The `Color` of the pixel at the specified coordinates.
-    */
   def pixelColor(x: Int, y: Int): Color =
     val argb = buffer.getRGB(x, y)
     new Color(argb)
@@ -120,15 +104,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
   def setRGBA(x: Int, y: Int, color: Color): Unit =
     buffer.setRGB(x, y, color.toARGBInt)
 
-  /** Scales the image to a target width and height.
-    *
-    * @param targetWidth
-    *   The target width for the scaled image.
-    * @param targetHeight
-    *   The target height for the scaled image.
-    * @return
-    *   A new `JVMBufferAdapter` instance containing the scaled image.
-    */
   def scaleTo(
       targetWidth: Double,
       targetHeight: Double
@@ -166,12 +141,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
     newBuffer
   end scaleTo
 
-  /** Sets the colors of the image from a sequence of `Color` objects.
-    *
-    * @param colors
-    *   A sequence of `Color` objects to be applied to the image. The sequence must have exactly
-    *   width * height items.
-    */
   def setColorsFromSeq(
       colors: Seq[Color]
   ): Unit =
@@ -199,19 +168,6 @@ class JVMBufferAdapter(private val buffer: BufferedImage) extends BufferAdapter[
     buffer.setData(raster)
   end setColorsFromSeq
 
-  /** Copies a portion of the image defined by a top-left corner and dimensions.
-    *
-    * @param topLeftX
-    *   X-coordinate of the top-left corner.
-    * @param topLeftY
-    *   Y-coordinate of the top-left corner.
-    * @param width
-    *   Width of the portion to copy.
-    * @param height
-    *   Height of the portion to copy.
-    * @return
-    *   A new `JVMBufferAdapter` instance containing the copied portion of the image.
-    */
   def copyPortionXYWH(
       topLeftX: Double,
       topLeftY: Double,
