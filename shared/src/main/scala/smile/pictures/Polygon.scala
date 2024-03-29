@@ -1,172 +1,6 @@
 package smile.pictures
 
-import smile.colors.{Color, LinearGradient, Paint, PresetColor}
 import smile.modeling.*
-import smile.modeling.Side.Bottom
-import smile.modeling.SideIndependentAlignment.BottomOrRight
-import smile.pictures.StrokeStyle.{Cap, Join}
-
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
-import scala.util.Random
-
-@JSExportTopLevel("TestPolygon")
-object TestPolygon:
-  def fill(paint: Paint): Option[FillStyle] = Some(FillStyle(paint))
-
-  def stroke(paint: Paint, width: Double, round: Boolean): Option[StrokeStyle] =
-    Some(
-      StrokeStyle(
-        paint,
-        width,
-        if round then Cap.Round else Cap.Square,
-        if round then Join.Round else Join.Miter
-      )
-    )
-
-  def addNoise(pic: PictureElement, noiseStrength: Double): Bitmap =
-    val bitmap = pic.toBitmap
-    val newBitmap = Bitmap(
-      bitmap.buffer.width,
-      bitmap.buffer.height,
-      (x, y) =>
-        val redNoise   = Random.nextInt(255)
-        val greenNoise = Random.nextInt(255)
-        val blueNoise  = Random.nextInt(255)
-        Color(redNoise, greenNoise, blueNoise, 255)
-    )
-
-    val transformed = bitmap.mergeWith(
-      newBitmap,
-      (a, b) =>
-        // Screen noise (1−(1−A)×(1−B))
-        val newColor = Color(
-          ((1 - (1 - a.red / 255.0) * (1 - b.red * noiseStrength / 255.0)) * 255).toInt,
-          ((1 - (1 - a.green / 255.0) * (1 - b.green * noiseStrength / 255.0)) * 255).toInt,
-          ((1 - (1 - a.blue / 255.0) * (1 - b.blue * noiseStrength / 255.0)) * 255).toInt,
-          a.opacity
-        )
-        newColor
-    )
-    transformed
-
-  @JSExport
-  val testPolygon = new Polygon(
-    Pos(100, 100),
-    Seq(
-      Pos(0, 0),
-      Pos(120, 10),
-      Pos(90, 100),
-      Pos(20, 90)
-    ),
-    Some(FillStyle(PresetColor.Red)),
-    Some(StrokeStyle(PresetColor.Black, 4))
-  )
-
-  @JSExport
-  val smile: Picture =
-    val logoHeight    = 300.0
-    val gradientWidth = logoHeight * 2.07
-    val radius        = logoHeight / 2.0
-    val padding       = 0
-    val bgStartColor  = new Color(0xffb6e4fa)
-    val bgEndColor    = new Color(0xff7e84c0)
-    val bgGradient = new LinearGradient(
-      Pos(-gradientWidth / 2.0, -logoHeight / 2.0),
-      Pos(gradientWidth / 2.0, logoHeight / 2.0),
-      bgStartColor,
-      bgEndColor
-    )
-    val leftEyeColor  = new Color(0xff0071b9)
-    val rightEyeColor = new Color(0xff2ab261)
-    val mouthColor    = new Color(0xfff15858)
-
-//    val canvasHeight = logoHeight + padding * 2
-
-//    val pic = addNoise(
-//      Rectangle(
-//        gradientWidth - radius,
-//        logoHeight - radius,
-//        fill(bgGradient),
-//        stroke(bgGradient, radius, true)
-//      ),
-//      0.6
-//    )
-    val text = Text(
-      Pos.Origin,
-      None,
-      "SMILe",
-      "Hack",
-      logoHeight / 3.33,
-      500,
-      fill(PresetColor.White),
-      None
-    )
-
-    val pic =
-//      Rectangle(
-//        gradientWidth - radius,
-//        logoHeight - radius,
-//        fill(bgGradient),
-//        stroke(bgGradient, radius, true)
-//      )
-      addNoise(
-        Rectangle(
-          gradientWidth - radius,
-          logoHeight - radius,
-          fill(bgGradient),
-          stroke(bgGradient, radius, true)
-        ),
-        0.6
-      )
-        .moveBy(gradientWidth / 2, logoHeight / 2)
-        .addAt(
-          Rectangle(
-            logoHeight / 10.0,
-            logoHeight / 10.0,
-            fill(leftEyeColor),
-            stroke(leftEyeColor, logoHeight / 15.0, true)
-          ).rotateByAroundOrigin(18),
-          logoHeight / 4.25,
-          logoHeight / 3.0,
-          PositionType.UpperLeftCorner
-        )
-        .addAt(
-          Triangle(
-            logoHeight / 8.57,
-            fill(rightEyeColor),
-            stroke(rightEyeColor, logoHeight / 15.0, true)
-          ).rotateByAroundOrigin(40),
-          logoHeight / 1.87 + padding,
-          logoHeight / 3.53 + padding,
-          PositionType.UpperLeftCorner
-        )
-        .addAt(
-          Arc(
-            Pos.Origin,
-            logoHeight / 1.51,
-            logoHeight / 1.54,
-            -138,
-            130,
-            0,
-            None,
-            stroke(mouthColor, logoHeight / 9.375, true)
-          ),
-          logoHeight / 7.21 + padding,
-          logoHeight / 15.5 + padding,
-          PositionType.UpperLeftCorner
-        )
-        .addAt(
-          text,
-          logoHeight * 1.04,
-          logoHeight / 2 - logoHeight / 3.33 / 2,
-          PositionType.UpperLeftCorner
-        )
-
-    println(s"polygon text height = ${text.boundary.height.inPixels}")
-    val pics = pic.addTo(Bottom, pic.toBitmap, 10, BottomOrRight)
-    println("pics done")
-    pics.toBitmap.toPicture
-//      .show()
 
 /** Represents a polygon defined by a sequence of points, with optional fill and stroke styles.
   *
@@ -179,7 +13,6 @@ object TestPolygon:
   * @param strokeStyle
   *   Optional stroke style for the outline of the polygon.
   */
-@JSExportTopLevel("Polygon")
 class Polygon(
     pos: Pos,
     val points: Seq[Pos],
@@ -187,7 +20,7 @@ class Polygon(
     override val strokeStyle: Option[StrokeStyle]
 ) extends VectorGraphic:
 
-  override def copy(newPosition: Pos): PictureElement = new Polygon(
+  override def copy(newPosition: Pos): Polygon = new Polygon(
     newPosition,
     points,
     fillStyle,

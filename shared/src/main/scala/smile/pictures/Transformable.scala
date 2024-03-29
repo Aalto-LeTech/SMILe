@@ -6,7 +6,6 @@ import smile.modeling.*
 import scala.annotation.tailrec
 
 object Transformable:
-
   /** A type alias for a function that transforms a picture into another picture. */
   type SimpleTransformer = Picture => Picture
 
@@ -18,7 +17,7 @@ object Transformable:
   * @tparam TransformableType
   *   The type of the transformable object.
   */
-trait Transformable[TransformableType <: Transformable[TransformableType]]:
+trait Transformable[+TransformableType]:
 
   /** The bounding box of the transformable object. */
   lazy val boundary: Bounds
@@ -129,7 +128,7 @@ trait Transformable[TransformableType <: Transformable[TransformableType]]:
       positionType: PositionType = DefaultPositionType
   ): Picture =
     addToFront(
-      content.moveTo(x, y, positionType)
+      content.moveTo(x, y, positionType).asInstanceOf[Transformable[?]]
     )
 
   /** Adds the given transformable object to the front of this object.

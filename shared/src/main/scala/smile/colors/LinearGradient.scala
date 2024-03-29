@@ -38,12 +38,12 @@ object LinearGradient:
   *   The method used to repeat the gradient pattern if the shape to be filled is larger than the
   *   gradient defined by the start and end points.
   */
-class LinearGradient(
-    val start: Pos,
-    val end: Pos,
-    val fractions: Seq[Float],
-    val colors: Seq[Color],
-    val cycleMethod: LinearGradient.CycleMethod
+case class LinearGradient(
+    start: Pos,
+    end: Pos,
+    fractions: Seq[Float],
+    colors: Seq[Color],
+    cycleMethod: LinearGradient.CycleMethod
 ) extends Paint:
   require(
     fractions.size == colors.size,

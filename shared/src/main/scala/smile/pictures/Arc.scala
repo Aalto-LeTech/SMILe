@@ -71,7 +71,7 @@ class Arc(
   /** Transformed boundary of this [[Arc]]. */
   override lazy val boundary: Bounds = Bounds(upperLeftCorner, lowerRightCorner)
 
-  override def copy(newPosition: Pos): PictureElement =
+  override def copy(newPosition: Pos): Arc =
     new Arc(
       newPosition,
       width,

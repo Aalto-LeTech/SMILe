@@ -2,6 +2,18 @@ package smile.pictures
 
 import smile.colors.Paint
 
+def fill(paint: Paint): Option[FillStyle] = Some(FillStyle(paint))
+
+def stroke(paint: Paint, width: Double, round: Boolean): Option[StrokeStyle] =
+  Some(
+    StrokeStyle(
+      paint,
+      width,
+      if round then StrokeStyle.Cap.Round else StrokeStyle.Cap.Square,
+      if round then StrokeStyle.Join.Round else StrokeStyle.Join.Miter
+    )
+  )
+
 /** Represents the fill style for drawing operations.
   *
   * @param paint

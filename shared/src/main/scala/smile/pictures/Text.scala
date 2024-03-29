@@ -10,8 +10,8 @@ import smile.modeling.{BoundaryCalculator, Bounds, Pos, Transformer}
   *   Optional custom bounds for the text.
   * @param content
   *   The content of the text.
-  * @param font
-  *   The font used for rendering the text.
+  * @param typeface
+  *   The typeface used for rendering the text.
   * @param fillStyle
   *   Optional fill style for the text.
   * @param strokeStyle
@@ -99,18 +99,6 @@ class Text(
       )
     )
 
-  /** Rasterizes the text and rotates it around a point.
-    *
-    * @return
-    *   A rotated bitmap.
-    */
-  override def rotateBy(angle: Double, centerOfRotation: Pos): Bitmap =
-    this.toBitmap.rotateBy(angle, centerOfRotation)
+  override def rotateBy(angle: Double, centerOfRotation: Pos): Text = ??? // TODO
 
-  /** Rasterizes the text and rotates it around the origo.
-    *
-    * @return
-    *   A rotated bitmap.
-    */
-  override def rotateByAroundOrigin(angle: Double): Bitmap =
-    this.toBitmap.rotateByAroundOrigin(angle)
+  override def rotateByAroundOrigin(angle: Double): Text = ??? // TODO

@@ -79,7 +79,7 @@ object Bitmap:
     */
   def apply(picture: Picture): Bitmap = Renderer().createBitmapFrom(picture)
 
-  object Empty extends Bitmap(BufferAdapter.Empty, NullBounds)
+  val Empty = new Bitmap(BufferAdapter.Empty, NullBounds)
 
 /** Represents a bitmap image, capable of holding and manipulating pixel data.
   *
@@ -88,7 +88,7 @@ object Bitmap:
   * @param bounds
   *   The boundaries of the bitmap.
   */
-class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends PictureElement:
+class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends DrawableElement:
 
   /** Primary constructor for creating a `Bitmap` with specified dimensions.
     *
@@ -109,7 +109,7 @@ class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends PictureElemen
     * @return
     *   A new `Bitmap` instance at the specified position.
     */
-  override def copy(newPosition: Pos): PictureElement =
+  override def copy(newPosition: Pos): Bitmap =
     new Bitmap(
       buffer,
       boundary.moveBy(newPosition.x, newPosition.y)
@@ -130,7 +130,7 @@ class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends PictureElemen
     * @return
     *   A new `Bitmap` instance moved by the specified offsets.
     */
-  override def moveBy(xOffset: Double, yOffset: Double): PictureElement =
+  override def moveBy(xOffset: Double, yOffset: Double): Bitmap =
     internalCopy(newBounds = boundary.moveBy(xOffset, yOffset))
 
   /** Creates a deep copy of this `Bitmap`. */
@@ -195,7 +195,7 @@ class Bitmap(val buffer: BufferAdapter[?], bounds: Bounds) extends PictureElemen
     internalCopy(newBuffer = resultBuffer)
   end transformColorToColor
 
-  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): PictureElement =
+  override def scaleBy(horizontalFactor: Double, verticalFactor: Double): Bitmap =
     scaleBy(horizontalFactor, verticalFactor, position)
 
   override def scaleBy(
