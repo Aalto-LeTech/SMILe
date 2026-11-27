@@ -143,17 +143,15 @@ class O1ModelTypesSuite extends munit.FunSuite:
     v("vel_equality")(Velocity(3, 4) == Velocity(Direction.fromDeltas(3, 4), 5))
     results.toSeq
 
-  /** Whether the suite runs on the JVM, where every probe has to print every digit of its golden
-    * value. On Scala.js a number may be a few units in the last place off. The probes go through
-    * `atan2`, `cos`, `sin` and `hypot`, whose last digit ECMAScript leaves to the engine, and the
-    * engines differ. For the direction of 30 degrees the JVM, Firefox 150 and Chromium 148 give
-    * 29.999999999999993, and Chromium 153 and WebKit 26.4 give 29.999999999999996. WebKit 26.4 also
-    * ends `Direction.fromDeltas(3, -4)` in 0.6 and `Velocity(3, -4)` in 3.0, where the others end
-    * them in 0.6000000000000001 and 3.0000000000000004. The text around the numbers is the course
-    * library's on every platform.
+  /** A number may be a few units in the last place off its golden value. The probes go through
+    * `atan2`, `cos`, `sin` and `hypot`, whose last digit Java and ECMAScript leave to the platform.
+    * The JVM's intrinsics on x64 end the `vel_ccw` probe's `dy` in -8.660254037844387, where ARM,
+    * which printed the golden values, ends it in 389. For the direction of 30 degrees the JVM,
+    * Firefox 150 and Chromium 148 give 29.999999999999993, and Chromium 153 and WebKit 26.4 give
+    * 29.999999999999996. WebKit 26.4 also ends `Direction.fromDeltas(3, -4)` in 0.6 and
+    * `Velocity(3, -4)` in 3.0, where the others end them in 0.6000000000000001 and
+    * 3.0000000000000004. The text around the numbers is the course library's on every platform.
     */
-  private val onTheJVM = 1.0.toString == "1.0"
-
   private val number = """-?[0-9][0-9.]*(E-?[0-9]+)?""".r
 
   /** Whether two texts are the same but for numbers a few units in the last place apart. */
@@ -192,7 +190,7 @@ class O1ModelTypesSuite extends munit.FunSuite:
         }
 
   test(
-    "every probe prints exactly what the course library's own Pos, Direction and Velocity printed"
+    "every probe prints what the course library's own Pos, Direction and Velocity printed"
   ) {
     val actual     = probes()
     val mismatches =
@@ -200,7 +198,7 @@ class O1ModelTypesSuite extends munit.FunSuite:
         ((name, expected), (actualName, text)) <- O1GoldenValues.expected.zip(actual)
         smileText = O1GoldenValues.deliberateDifferences.get(name).map(_.smile).getOrElse(expected)
         if name != actualName || text != smileText
-        if onTheJVM || !sameButForLastDigits(smileText, text)
+        if !sameButForLastDigits(smileText, text)
       yield s"$name: expected $smileText, got $actualName -> $text"
 
     assertEquals(actual.map(_._1), O1GoldenValues.expected.map(_._1))
