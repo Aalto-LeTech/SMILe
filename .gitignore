@@ -31,3 +31,8 @@ metals.sbt
 .idea_modules
 /.worksheet/
 /js/node_modules/
+.scala-build/
+node_modules/
+
+# The pictures the doc comments show, drawn by sbt docPictures
+**/pictures/*.png

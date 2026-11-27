@@ -1,0 +1,10 @@
+{
+  "name": "smile-test-env",
+  "private": true,
+  "description": "DOM environment for the Scala.js test suite (jsdom with @napi-rs/canvas)",
+  "devDependencies": {
+    "jsdom": "^31.0.1",
+    "@napi-rs/canvas": "^1.2.1"
+  },
+  "packageManager": "pnpm@12.23.0"
+}
