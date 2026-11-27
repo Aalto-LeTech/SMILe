@@ -1,35 +1,60 @@
 package smile.infrastructure
 
-import smile.pictures.AnimatedPicture
+import smile.pictures.{AnimatedPicture, SvgDocument}
 
-object ResourceFactory:
-  def apply(): ResourceFactory[?] = PlatformSpecific.resourceFactory
+import scala.concurrent.{ExecutionContext, Future}
 
-/** Provides functionalities for creating and saving images from various sources.
+private[smile] object ResourceFactory:
+  def apply(): ResourceFactory = PlatformSpecific.resourceFactory
+
+/** Loads images, animated pictures and SVG documents from paths and URLs.
   */
-trait ResourceFactory[Buffer]:
-  /** Creates a `BufferAdapter` from an image located at a given path. This method can load images
-    * from local file paths, resources within the application's classpath, and URIs, including those
-    * on the internet. If the path is a URL to an image on the internet, the method will attempt to
-    * download and load the image.
-    *
-    * @param path
-    *   The path to the image. It can be a local filesystem path, a resource path, or a URL to an
-    *   image on the internet.
-    * @return
-    *   A `BufferAdapter` containing the image loaded from the specified path.
+private[smile] trait ResourceFactory:
+  /** Loads the image at `path`, which can be a local file path, a resource on the application's
+    * classpath, or a URI, including one on the internet, which it downloads.
     */
-  def bufferAdapterFromPath(path: String): BufferAdapter[Buffer]
+  def bufferAdapterFromPath(path: String): NativeBuffer
 
-  /** Creates an `AnimatedPicture` from a GIF image located at the specified path.
+  /** Loads the GIF image at `path`, which is looked up as an image's path is.
     *
-    * @param path
-    *   The path to the GIF image, which can be a local filesystem path, a resource path, or an
-    *   internet URL.
-    * @return
-    *   An `AnimatedPicture` instance representing the animated GIF.
     * @throws java.io.IOException
     *   if the image at the specified path cannot be found or loaded or if no suitable GIF image
     *   reader is available.
     */
   def animatedPictureFromPath(path: String): AnimatedPicture
+
+  /** Reads the SVG document at `path`, which is looked up as an image's path is.
+    *
+    * @throws java.io.IOException
+    *   naming `path`, if nothing is there or it cannot be read as an SVG document
+    */
+  def svgDocumentFromPath(path: String): SvgDocument
+
+  /** The context the default asynchronous loaders below run on.
+    *
+    * Each platform decides for itself, because loading is asynchronous in the browser but a
+    * thread-bound mixture of IO and decoding on the JVM. It is abstract so that neither platform
+    * inherits the other's choice by accident. The choice also cannot live here because the Scala.js
+    * javalib ships no `java.util.concurrent.Executors`.
+    */
+  protected def loadingExecutionContext: ExecutionContext
+
+  /** Loads an image asynchronously on every platform. The JVM runs its synchronous loader on
+    * `smile.infrastructure.ResourceFactory.loadingExecutionContext`. Scala.js performs an
+    * asynchronous browser load and caches the result so the synchronous API can serve the same path
+    * afterwards.
+    */
+  def loadBufferAdapter(path: String): Future[NativeBuffer] =
+    Future(bufferAdapterFromPath(path))(using loadingExecutionContext)
+
+  /** Loads an animated picture asynchronously, as
+    * `smile.infrastructure.ResourceFactory.loadBufferAdapter` describes per platform.
+    */
+  def loadAnimatedPicture(path: String): Future[AnimatedPicture] =
+    Future(animatedPictureFromPath(path))(using loadingExecutionContext)
+
+  /** Loads an SVG document asynchronously, as
+    * `smile.infrastructure.ResourceFactory.loadBufferAdapter` describes per platform.
+    */
+  def loadSvgDocument(path: String): Future[SvgDocument] =
+    Future(svgDocumentFromPath(path))(using loadingExecutionContext)

@@ -1,186 +1,105 @@
 package smile.infrastructure
 
-import smile.Settings.DefaultBackgroundColor
 import smile.colors.Color
-import smile.modeling.AffineTransformation
 
-object BufferAdapter:
-  def apply(width: Int, height: Int): BufferAdapter[?] =
+private[smile] object BufferAdapter:
+  def apply(width: Int, height: Int): NativeBuffer =
     PlatformSpecific.bufferAdapter(width, height)
 
-  val Empty: BufferAdapter[?] = apply(1, 1)
+  /** A fresh 1x1 buffer representing "no content". A new instance is returned on every access
+    * because the platform image a buffer hands out through `get` can still be drawn on, so a shared
+    * singleton could be corrupted.
+    */
+  def Empty: NativeBuffer = apply(1, 1)
 
-/** Adapter for managing and manipulating a bitmap. This class provides methods for common image
-  * processing tasks such as copying, scaling, and transforming.
+/** A bitmap's size, reads of its pixels and the setters that fill it. The image operations live in
+  * `smile.infrastructure.ImageOperations`, so that a buffer that only stores pixels need not
+  * implement them.
+  *
+  * A buffer is not changed after it has been made. Every operation returns a new buffer. Only SMILe
+  * itself fills a buffer it has just created, through the setters it keeps to itself.
   */
-abstract class BufferAdapter[Buffer]:
+private[smile] trait BufferAdapter:
 
   val width: Int
   val height: Int
 
   def imageData: Seq[Color]
 
-  def get: Buffer
-
-  /** Creates a deep copy of the current `BufferAdapter` instance, drawing the current buffer onto a
-    * new one.
+  /** Saves the buffer as a PNG file, on platforms that support direct file access.
     *
     * @return
-    *   A new `BufferAdapter` instance that is a copy of the current one.
+    *   `true` if the image was saved. `false` if saving failed or the platform does not support it.
     */
-  def deepCopy: BufferAdapter[Buffer]
+  def saveToPath(path: String): Boolean = false
 
-  /** Sets the colors of the image from a sequence of `Color` objects.
+  /** Overwrites all pixels.
     *
     * @param colors
-    *   A sequence of `Color` objects to be applied to the image. The sequence must have exactly
-    *   width * height items.
+    *   Exactly width * height values.
     */
-  def setColorsFromSeq(
+  private[smile] def setColorsFromSeq(
       colors: Seq[Color]
   ): Unit
 
-  /** Retrieves the color at a specified pixel location in the buffer.
-    *
-    * @param x
-    *   The x-coordinate of the pixel.
-    * @param y
-    *   The y-coordinate of the pixel.
-    * @return
-    *   The `Color` of the pixel at the specified coordinates.
-    */
   def pixelColor(x: Int, y: Int): Color
 
-  /** Sets the color of a pixel at a specified location in the buffer.
-    *
-    * @param x
-    *   The x-coordinate of the pixel.
-    * @param y
-    *   The y-coordinate of the pixel.
-    * @param color
-    *   The `Color` to set the pixel to.
+  private[smile] def setRGBA(x: Int, y: Int, color: Color): Unit
+
+  /** Returns all pixels as packed ARGB integers in row-major order. The bulk counterpart of
+    * `smile.infrastructure.BufferAdapter.imageData` for pixel operations that would otherwise box a
+    * [[smile.colors.Color]] per pixel.
     */
-  def setRGBA(x: Int, y: Int, color: Color): Unit
+  def argbData: Array[Int]
 
-  /** Scales the image to a target width and height.
+  /** Returns the top-left rectangle as packed ARGB integers with a compact row-major layout.
+    * Dimensions must be nonnegative and within this buffer. A zero-area rectangle is empty. The
+    * returned array is independent of the source's pixel storage.
     *
-    * @param targetWidth
-    *   The target width for the scaled image.
-    * @param targetHeight
-    *   The target height for the scaled image.
-    * @return
-    *   A new `BufferAdapter` instance containing the scaled image.
+    * Platforms can override this compatibility implementation to read only the requested pixels.
     */
-  def scaleTo(
-      targetWidth: Double,
-      targetHeight: Double
-  ): BufferAdapter[Buffer]
+  def argbData(regionWidth: Int, regionHeight: Int): Array[Int] =
+    requireARGBRegion(regionWidth, regionHeight)
+    if regionWidth == 0 || regionHeight == 0 then return Array.emptyIntArray
+    val source = argbData
+    val result = new Array[Int](regionWidth * regionHeight)
+    var y      = 0
+    while y < regionHeight do
+      Array.copy(source, y * width, result, y * regionWidth, regionWidth)
+      y += 1
+    result
 
-  /** Copies a portion of the image defined by two corners: top-left and bottom-right.
+  protected final def requireARGBRegion(regionWidth: Int, regionHeight: Int): Unit =
+    require(
+      regionWidth >= 0 && regionHeight >= 0 && regionWidth <= width && regionHeight <= height,
+      s"Requested ARGB region ${regionWidth}x$regionHeight is outside the ${width}x$height buffer"
+    )
+
+  /** Overwrites all pixels from packed ARGB integers in row-major order.
     *
-    * @param left
-    *   X-coordinate of the top-left corner.
-    * @param top
-    *   Y-coordinate of the top-left corner.
-    * @param right
-    *   X-coordinate of the bottom-right corner.
-    * @param bottom
-    *   Y-coordinate of the bottom-right corner.
-    * @return
-    *   A new `BufferAdapter` instance containing the copied portion of the image.
+    * @param data
+    *   Exactly width * height values.
     */
-  def copyPortionXYXY(
-      left: Double,
-      top: Double,
-      right: Double,
-      bottom: Double
-  ): BufferAdapter[Buffer] =
-    val (x0, x1) = if left > right then (right, left) else (left, right)
-    val (y0, y1) = if top > bottom then (bottom, top) else (top, bottom)
+  private[smile] def setARGBData(data: Array[Int]): Unit
 
-    val width  = x1 - x0
-    val height = y1 - y0
-
-    copyPortionXYWH(left, top, width, height)
-
-  /** Copies a portion of the image defined by a top-left corner and dimensions.
-    *
-    * @param topLeftX
-    *   X-coordinate of the top-left corner.
-    * @param topLeftY
-    *   Y-coordinate of the top-left corner.
-    * @param width
-    *   Width of the portion to copy.
-    * @param height
-    *   Height of the portion to copy.
-    * @return
-    *   A new `BufferAdapter` instance containing the copied portion of the image.
+  /** Populates the buffer from packed ARGB values in row-major callback order. The destination is
+    * updated only after all callbacks succeed. Platforms may fuse generation with native storage.
     */
-  def copyPortionXYWH(
-      topLeftX: Double,
-      topLeftY: Double,
-      width: Double,
-      height: Double
-  ): BufferAdapter[Buffer]
+  private[smile] def setARGBByLocation(generator: (Int, Int) => Int): Unit =
+    val data = new Array[Int](width * height)
+    var y    = 0
+    var i    = 0
+    while y < height do
+      var x = 0
+      while x < width do
+        data(i) = generator(x, y)
+        i += 1
+        x += 1
+      y += 1
+    setARGBData(data)
 
-  def setColorsByLocation(generator: (Int, Int) => Color): Unit =
-    val data = (0 until width * height).map: i =>
-      val x = i % width
-      val y = i / width
-      generator(x, y)
-
-    setColorsFromSeq(data)
+  private[smile] def setColorsByLocation(generator: (Int, Int) => Color): Unit =
+    setARGBByLocation((x, y) => generator(x, y).toARGBInt)
   end setColorsByLocation
-
-  def transformColorToColor(transformer: Color => Color): BufferAdapter[?] =
-    val result      = BufferAdapter(width, height)
-    val currentData = this.imageData
-    val resultColors = (0 until width * height).map: i =>
-      transformer(currentData(i))
-
-    result.setColorsFromSeq(resultColors)
-    result
-  end transformColorToColor
-
-  /** Merges this Buffer with another Buffer using a specified pixel merging function.
-    *
-    * @param another
-    *   The other BufferAdapter to merge with.
-    * @param pixelMerger
-    *   A function that takes two colors and returns a merged color.
-    * @return
-    *   A new `BufferAdapter` instance representing the merged image.
-    */
-  def mergeWith(another: BufferAdapter[?], pixelMerger: (Color, Color) => Color): BufferAdapter[?] =
-    val resultWidth  = width.min(another.width)
-    val resultHeight = height.min(another.height)
-
-    val thisData    = this.imageData
-    val anotherData = another.imageData
-
-    val resultColors = (0 until resultWidth * resultHeight).map: i =>
-      pixelMerger(thisData(i), anotherData(i))
-
-    val result = BufferAdapter(resultWidth, resultHeight)
-    result.setColorsFromSeq(resultColors)
-    result
-  end mergeWith
-
-  /** Creates a new `BufferAdapter` instance that is a transformed version of the current buffer.
-    * The transformation is applied using an `AffineTransformation`. The canvas can optionally be
-    * resized based on the transformation.
-    *
-    * @param transformation
-    *   The `AffineTransformation` to apply to the image.
-    * @param backgroundColor
-    *   The background color to use when clearing the canvas if resizing is necessary. Defaults to
-    *   `DefaultBackgroundColor`.
-    * @return
-    *   A new `BufferAdapter` instance containing the transformed image.
-    */
-  def createTransformedVersionWith(
-      transformation: AffineTransformation,
-      backgroundColor: Color = DefaultBackgroundColor
-  ): BufferAdapter[Buffer]
 
 end BufferAdapter
