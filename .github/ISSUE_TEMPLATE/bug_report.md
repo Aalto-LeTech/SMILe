@@ -1,17 +1,17 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report unexpected behavior in SMILe
 title: ''
 labels: bug
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**What happened?**
+Describe what you expected and what happened when you ran the code.
 
-**To Reproduce**
-Code using O1Library to reproduce the bug:
+**How to reproduce it**
+Include a small O1Library example that shows the problem.
 
 ```scala
 import o1.*
@@ -21,7 +21,7 @@ import o1.*
 ```
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+If the picture looks wrong, include a screenshot.
 
 **Additional context**
-Add any other context about the problem here.
+Include any details needed to reproduce the issue, such as your platform and library version.
