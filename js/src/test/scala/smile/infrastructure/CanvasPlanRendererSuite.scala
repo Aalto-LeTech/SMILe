@@ -6,7 +6,7 @@ import smile.infrastructure.JSBufferAdapter
 import smile.modeling.{Bounds, Pos}
 import smile.pictures.*
 import smile.pictures.{FillStyle, ResamplingHint}
-import smile.testing.BrowserCapabilities
+import smile.testing.{BrowserCapabilities, Rasterizer}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -111,12 +111,12 @@ class CanvasPlanRendererSuite extends munit.FunSuite:
     val (width, height, ahead)                    = render(text)
     val (mirroredWidth, mirroredHeight, mirrored) = render(text.flipHorizontally)
     assertEquals((mirroredWidth, mirroredHeight), (width, height))
-    var worst = 0
-    for y <- 0 until height; x <- 0 until width do
-      val (a, b) = (ahead(y * width + x), mirrored(y * width + width - 1 - x))
-      for shift <- Seq(0, 8, 16, 24) do
-        worst = worst.max((((a >>> shift) & 0xff) - ((b >>> shift) & 0xff)).abs)
-    assert(worst <= 1, s"a channel differs by $worst")
+    // Chromium on macOS mirrors the glyphs to within a level. On Linux its antialiasing of a
+    // mirrored glyph measured up to 7 levels apart on 68 of 800 pixels, where glyphs half a pixel
+    // off would differ by over a hundred.
+    val unmirrored = Array.tabulate(width * height): i =>
+      mirrored(i / width * width + width - 1 - i % width)
+    assert(Rasterizer.sameUpTo(8, ahead, unmirrored), "the mirrored text is not the text's mirror")
     assert(ahead.exists(alpha(_) == 255), "the text draws nothing opaque")
   }
 
@@ -310,7 +310,10 @@ class CanvasPlanRendererSuite extends munit.FunSuite:
         ctx.shadowOffsetX = 3
         JSRenderer.renderInto(ctx, c.element, scale, settings, 0L)
       assertEquals((canvas.width, canvas.height), (expected.width, expected.height))
-      assert(canvas.argbData.sameElements(expected.argbData), s"${c.label} at $scale")
+      assert(
+        Rasterizer.sameUpTo(Rasterizer.layerRoundingLevels, canvas.argbData, expected.argbData),
+        s"${c.label} at $scale"
+      )
   }
 
   test(
@@ -398,6 +401,9 @@ class CanvasPlanRendererSuite extends munit.FunSuite:
       for nesting <- Seq(1, 2, 16) do
         val (w, h, bounded) = render(tree, scale, nesting)
         assertEquals((w, h), (width, height), s"at nesting $nesting")
-        assert(bounded.sameElements(argb), s"the pixels differ at nesting $nesting")
+        assert(
+          Rasterizer.sameUpTo(Rasterizer.layerRoundingLevels, bounded, argb),
+          s"the pixels differ at nesting $nesting"
+        )
     }
 end CanvasPlanRendererSuite

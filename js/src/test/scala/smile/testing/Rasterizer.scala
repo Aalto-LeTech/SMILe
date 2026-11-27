@@ -49,3 +49,22 @@ object Rasterizer:
     * of the 16 samples of a pixel.
     */
   val gridStepLevels: Int = 20
+
+  /** How many levels a channel, multiplied by its alpha, may move when the same content is
+    * composited through layers in another order.
+    *
+    * Skia on ARM gives the same pixels. On x64 its blending rounds an alpha one level the other
+    * way, which measured on 47 of the 900 pixels of a turned wrap shift.
+    */
+  val layerRoundingLevels: Int = 2
+
+  /** Whether two renderings of the same size are the same up to `levels` on every channel, each
+    * multiplied by its alpha, since the color of a nearly transparent pixel says nothing.
+    */
+  def sameUpTo(levels: Int, first: Array[Int], second: Array[Int]): Boolean =
+    def weighted(pixel: Int, shift: Int): Int =
+      val alpha = pixel >>> 24
+      if shift == 24 then alpha else ((pixel >>> shift) & 0xff) * alpha / 255
+    first.length == second.length && first.indices.forall: i =>
+      first(i) == second(i) || Seq(0, 8, 16, 24).forall: shift =>
+        (weighted(first(i), shift) - weighted(second(i), shift)).abs <= levels

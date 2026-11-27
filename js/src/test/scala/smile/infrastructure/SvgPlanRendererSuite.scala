@@ -6,6 +6,9 @@ import smile.colors.{Color, LinearGradient}
 import smile.modeling.{Affine, Bounds, Pos}
 import smile.pictures.*
 import smile.pictures.{FillStyle, ResamplingHint}
+import smile.testing.Rasterizer
+
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /** The SVG renderer of the shared draw plan, by the structure of what it writes. jsdom cannot
   * rasterize SVG, so its pixels are compared with the canvas's in the browser tier. The pixels of a
@@ -16,10 +19,55 @@ class SvgPlanRendererSuite extends munit.FunSuite:
 
   import PlanRenderCases.*
 
+  private given ExecutionContext = ExecutionContext.global
+
   private val settings = RenderSettings.Default
 
   private def render(e: Element, density: Double = 1.0): dom.Element =
     SvgPlanRenderer.render(e, settings, density)
+
+  /** The size and the ARGB pixels of the image at `url`, as this environment decodes it. */
+  private def decoded(url: String): Future[(Int, Int, Array[Int])] =
+    val result = Promise[(Int, Int, Array[Int])]()
+    val image  = dom.document.createElement("img").asInstanceOf[dom.html.Image]
+    image.onload = _ =>
+      val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+      ctx.drawImage(image, 0, 0)
+      val rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+      val argb = Array.tabulate(canvas.width * canvas.height): i =>
+        (rgba(4 * i + 3) << 24) | (rgba(4 * i) << 16) | (rgba(4 * i + 1) << 8) | rgba(4 * i + 2)
+      result.success((canvas.width, canvas.height, argb))
+    image.addEventListener(
+      "error",
+      (_: dom.Event) =>
+        val _ = result.tryFailure(new AssertionError("an embedded raster failed to decode"))
+    )
+    image.src = url
+    result.future
+
+  /** Whether two lists of embedded rasters hold the same pictures. Equal data is the same at once.
+    * Otherwise each raster is paired with one of its size whose pixels are the same up to
+    * [[smile.testing.Rasterizer.layerRoundingLevels]].
+    */
+  private def sameRasters(first: Vector[String], second: Vector[String]): Future[Boolean] =
+    if first == second then Future.successful(true)
+    else if first.length != second.length then Future.successful(false)
+    else
+      for
+        as <- Future.sequence(first.map(decoded))
+        bs <- Future.sequence(second.map(decoded))
+      yield
+        val left = scala.collection.mutable.ArrayBuffer.from(bs)
+        as.forall: (width, height, pixels) =>
+          val at = left.indexWhere: (w, h, others) =>
+            w == width && h == height &&
+              Rasterizer.sameUpTo(Rasterizer.layerRoundingLevels, pixels, others)
+          if at >= 0 then
+            val _ = left.remove(at)
+          at >= 0
 
   private def all(root: dom.Element, selector: String): Vector[dom.Element] =
     val found = root.querySelectorAll(selector)
@@ -369,8 +417,10 @@ class SvgPlanRendererSuite extends munit.FunSuite:
       def rasters(nesting: Int): Vector[String] =
         all(SvgPlanRenderer.render(tree, settings, density, 0L, nesting), "image").map(href).sorted
       val unbounded = rasters(Int.MaxValue)
-      for nesting <- Seq(1, 2, 16) do
-        assert(rasters(nesting) == unbounded, s"the rasters differ at nesting $nesting")
+      val checks    = Seq(1, 2, 16).map: nesting =>
+        sameRasters(rasters(nesting), unbounded).map: same =>
+          assert(same, s"the rasters differ at nesting $nesting")
+      Future.sequence(checks)
     }
 
   // jsdom takes time cubic in the depth to nest elements. 900 levels, about where the turned crops

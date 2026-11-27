@@ -44,7 +44,7 @@ jobs:
       # Scala.js ones under jsdom, and the parity harness's probes without a browser. sbt starts
       # and loads the project once.
       - name: Check formatting and run all tests
-        run: sbt scalafmtCheckAll scalafmtSbtCheck testFull
+        run: sbt fullCheck
 
       - name: Upload visual test results
         if: always()
