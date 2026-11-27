@@ -14,7 +14,8 @@ This project is the successor of [SMCL.](https://github.com/Aalto-LeTech/Scala-M
 
 ## Tools & Dependencies
 
-This library uses [sbt](http://www.scala-sbt.org/) as its build tool.
+This library uses [sbt](http://www.scala-sbt.org/) 2 as its build tool and needs JDK 25. The Scala.js tests also need
+Node.js and [pnpm](https://pnpm.io/), with the test environment installed by `pnpm install`.
 
 ## Developing with IntelliJ IDEA and SBT
 
@@ -22,4 +23,11 @@ This library uses [sbt](http://www.scala-sbt.org/) as its build tool.
 
 `sbt packageDoc` generates a jar with the library and its documentation.
 
-Running the `Release` GitHub Action builds the library and publishes it on GitHub.
+`sbt apiDocs` builds the API documentation into `target/api-docs`. Pushing to `main` publishes it on GitHub Pages.
+
+### Testing the Library
+
+`sbt testFull` runs every test on the JVM and, under jsdom, on Scala.js. Two optional tiers run in a headless
+Chromium, which Playwright downloads: `sbt -Dsmile.browser=true smileJS/testFull` runs the Scala.js tests in a
+browser, and `sbt -Dsmile.parity=true parityJVM/testFull` compares the Java2D, canvas and SVG renderers picture by
+picture.
